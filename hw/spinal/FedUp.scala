@@ -13,11 +13,11 @@ import javax.imageio.ImageIO
 
 
 object FedUp {
-    private val WIDTH               = 16
-    private val HEIGHT              = 16
-    private val PIXELS              = WIDTH * HEIGHT
-    private val BYTES_PER_PIXEL     = 3
-    private val ADDR_WIDTH          = log2Up(PIXELS * BYTES_PER_PIXEL)
+    val WIDTH               = 16
+    val HEIGHT              = 16
+    val PIXELS              = WIDTH * HEIGHT
+    val BYTES_PER_PIXEL     = 3
+    val ADDR_WIDTH          = log2Up(PIXELS * BYTES_PER_PIXEL)
 
     def atype()                     = UInt(ADDR_WIDTH bits)
 
@@ -42,6 +42,147 @@ object FedUp {
 }
 
 
+case class UartHandler() extends Component {
+    import FedUp._
+
+    val io = new Bundle {
+        val uart        = UartBus()
+        val ram_waddr   = out(atype())
+        val ram_din     = out(UInt(8 bits))
+        val ram_write   = out(Bool())
+    }
+    import io._
+
+
+    val r_urd       = Reg(Bool()) init(False)
+    val r_uwr       = Reg(Bool()) init(False)
+    val r_uout      = Reg(UInt(8 bits)) init(0)
+
+    uart.rd         := r_urd
+    uart.wr         := r_uwr
+    uart.wdata      := r_uout.asBits
+
+
+    val r_waddr     = Reg(UInt(ADDR_WIDTH bits)) init(0)
+    val r_wdata     = Reg(UInt(8 bits)) init(0)
+    val r_write     = Reg(Bool()) init(False)
+
+    ram_waddr       := r_waddr
+    ram_din         := r_wdata
+    ram_write       := r_write
+
+
+    val buffer      = Vec.fill(5)(Reg(UInt(8 bits)))
+    val count       = Reg(UInt(3 bits)) init(0)
+
+    
+    val stateBits   = 5
+    val state       = Reg(UInt(stateBits bits)) init(0)
+    val stateNext   = UInt(stateBits bits) //Reg(UInt(stateBits bits)) init(0) 
+    val advance     = False
+
+    stateNext := state + 1
+
+    var stateID = 0
+    def nextStateID(): Int = {
+        var id = stateID
+        stateID += 1
+        return id
+    }
+
+    switch(state) {
+        def nextState(body: => Unit) = {
+            val id = nextStateID()
+            is(id)(body)
+            id
+        }
+
+        def goto(id: Any) = {
+            id match {
+                case i: Int => { stateNext := U(i, stateBits bits) }
+                case ui: UInt => { stateNext := ui }
+                case _ => throw new IllegalArgumentException()
+            }
+            advance := True
+        }
+        def next() = { advance := True }
+        def delayState() = nextState { next() }
+
+
+        val recv = nextState {
+            when(!uart.rxf) {
+                r_urd := True
+                next()
+            }
+        }
+        delayState()
+        nextState {
+            switch(count) {
+                for(i <- 0 until buffer.length) {
+                    is(i) {
+                        buffer(i) := uart.rdata.asUInt
+                        r_uout := uart.rdata.asUInt
+                    }
+                }
+            }
+            next()
+        }
+        nextState {
+            r_urd   := False
+            when(!uart.txe) {
+                r_uwr   := True
+                count   := count + 1
+                next()
+            }
+        }
+        delayState()
+        nextState {
+            r_uwr := False
+            when(count === buffer.length) {
+                count := 0
+                next()
+            } otherwise {
+                goto(recv)
+            }
+        }
+        val write = nextState {
+            val addr = buffer(0) + buffer(1) * WIDTH + count
+            r_waddr := addr.resized
+            switch(count) {
+                for(i <- 0 until 3) {
+                    is(i) { r_wdata := buffer(i + 2) }
+                }
+            }
+            r_write := True
+            next()
+        }
+        nextState {
+            count := count + 1
+            next()
+        }
+        nextState {
+            r_write := False
+            r_waddr := 0 // NOTE: technically not needed (right?)
+            r_wdata := 0 // NOTE: technically not needed (right?)
+            when(count === 3) {
+                count := 0
+                next()
+            } otherwise {
+                goto(write)
+            }
+        }
+    }
+
+    when(advance) {
+        when(stateNext === stateID) {
+            state := 0
+        } otherwise {
+            state := stateNext
+        }
+    }
+}
+
+
 case class FedUp() extends Component {
     import FedUp._
 
@@ -52,11 +193,8 @@ case class FedUp() extends Component {
     import io._
 
 
-    uart.wdata      := 0
-    uart.wr         := False
-    uart.rd         := False
 
-
+    // TODO: double buffer
 
     val ram         = createRAM() //Mem(UInt(8 bits), WIDTH * HEIGHT & BYTES_PER_PIXEL)
 
@@ -78,10 +216,12 @@ case class FedUp() extends Component {
         enable      = ram_read
     )
 
-    ram_waddr       := 0
-    ram_din         := 0
-    ram_write       := False
 
+    val uartHandler = UartHandler()
+    uartHandler.io.uart <> uart
+    ram_waddr := uartHandler.io.ram_waddr
+    ram_din := uartHandler.io.ram_din
+    ram_write := uartHandler.io.ram_write
 
 
     val dout        = Reg(Bool()) init(True)
@@ -173,15 +313,86 @@ case class FedUp() extends Component {
 
 
 object GenerateSOC extends App {
-    spinalConfig.generateVerilog(FedUp())
+    spinalConfig().generateVerilog(FedUp())
 }
-
 
 
 object SimulateSOC extends App {
     SimConfig
         .withWave
-        .withConfig(spinalConfig)
+        .withConfig(spinalConfig())
+        .compile {
+            val soc = UartHandler()
+            
+            soc.io.uart.rdata.simPublic()
+            soc.io.uart.rxf.simPublic()
+            soc.io.uart.rd.simPublic()
+            soc.io.ram_din.simPublic()
+            soc.io.ram_waddr.simPublic()
+            soc.io.ram_write.simPublic()
+            
+            soc
+        }
+        .doSim { soc =>
+            import soc.io._
+
+            uart.rdata #= 0
+            uart.rxf   #= true
+
+            
+            val clk = soc.clockDomain
+
+            clk.fallingEdge()
+            sleep(0)
+
+            clk.assertReset()
+            for(_ <- 0 until 10) {
+                clk.clockToggle()
+                sleep(1)
+            }
+            clk.deassertReset()
+            sleep(1)
+
+
+            def tick() = {
+                clk.clockToggle()
+                sleep(1)
+                clk.clockToggle()
+                sleep(1)
+            }
+            
+            def ticks(n: Int) = {
+                for(i <- 0 until n) { tick() }
+            }
+
+
+            for(i <- 0 until 20) { tick() }
+
+
+            val xs = Array(12, 7, 37, 14, 9)
+            for(x <- xs) {
+                uart.rxf #= false
+
+                while(!uart.rd.toBoolean) { tick() }
+                uart.rxf #= true
+                uart.rdata #= x
+                while(uart.rd.toBoolean) { tick() }
+                uart.rdata #= 0
+
+                ticks(10)
+            }
+            
+
+            for(i <- 0 until 20) { tick() }
+        }
+}
+
+
+/*
+object SimulateSOC extends App {
+    SimConfig
+        .withWave
+        .withConfig(spinalConfig())
         .compile {
             val soc = FedUp()
             
@@ -220,3 +431,4 @@ object SimulateSOC extends App {
             }
         }
 }
+*/

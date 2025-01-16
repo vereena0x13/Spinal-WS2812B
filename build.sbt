@@ -2,6 +2,8 @@ ThisBuild / version         := "0.1.0"
 ThisBuild / scalaVersion    := "2.13.14"
 ThisBuild / organization    := "gay.inara.vereena"
 
+ThisBuild/scalacOptions ++= Seq("-unchecked", "-deprecation")
+
 val spinalVersion = "1.10.2a"
 val spinalCore = "com.github.spinalhdl" %% "spinalhdl-core" % spinalVersion
 val spinalLib = "com.github.spinalhdl" %% "spinalhdl-lib" % spinalVersion
