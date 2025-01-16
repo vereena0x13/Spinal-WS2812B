@@ -1,9 +1,11 @@
 set_property CFGBVS VCCO [current_design]
 set_property CONFIG_VOLTAGE 3.3 [current_design]
 
-set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN F4 } [get_ports {t_clk}]
+
+set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN F4  SLEW FAST } [get_ports {t_clk}]
 create_clock -name t_clk -period 10.0 [get_ports {t_clk}]
-set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN A14  PULLUP TRUE } [get_ports {t_rst}]
+set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN A14  SLEW FAST  PULLUP TRUE } [get_ports {t_rst}]
+
 
 set_property IOSTANDARD LVCMOS33 [get_ports {t_uart_data[*]}]
 set_property PACKAGE_PIN J18 [get_ports {t_uart_data[7]}]

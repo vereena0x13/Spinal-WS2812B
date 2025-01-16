@@ -11,7 +11,12 @@ module top(
 	output wire t_gpio_a13
 );
 
-	wire clk = t_clk;
+	wire clk;
+	soc_mmcm mmcm(
+		.clk_in(t_clk),
+		.reset(~t_rst),
+		.clk_out(clk)
+	);
 
 
 	wire srst;
@@ -48,25 +53,27 @@ module top(
 
 
 	wire [7:0] uart_do;
+	wire [7:0] uart_di;
 	wire uart_wr;
 	wire uart_rd;
 
-    assign t_uart_data = t_uart_wr ? 8'bZZZZZZZZ : uart_do;
-	assign t_uart_wr = ~uart_wr;
-	assign t_uart_rd = ~uart_rd;
+    assign t_uart_data 	= uart_wr ? uart_do : 8'bz;
+	assign uart_di 		= t_uart_data;
+	assign t_uart_wr 	= ~uart_wr;
+	assign t_uart_rd 	= ~uart_rd;
 
 
     FedUp soc(
         .clk(clk),
         .reset(rst),
-        .io_uart_rdata(t_uart_data),
+        .io_uart_rdata(uart_di),
 		.io_uart_wdata(uart_do),
 		.io_uart_txe(stxe),
 		.io_uart_rxf(srxf),
 		.io_uart_wr(uart_wr),
 		.io_uart_rd(uart_rd),
 		.io_gpio_a13(t_gpio_a13)
-    );
+   );
 
 
 endmodule

@@ -76,7 +76,7 @@ case class UartHandler() extends Component {
     val count       = Reg(UInt(3 bits)) init(0)
 
     
-    val stateBits   = 5
+    val stateBits   = 8
     val state       = Reg(UInt(stateBits bits)) init(0)
     val stateNext   = UInt(stateBits bits) //Reg(UInt(stateBits bits)) init(0) 
     val advance     = False
@@ -89,6 +89,8 @@ case class UartHandler() extends Component {
         stateID += 1
         return id
     }
+
+    val ibuf = Reg(UInt(8 bits)) init(0)
 
     switch(state) {
         def nextState(body: => Unit) = {
@@ -109,6 +111,41 @@ case class UartHandler() extends Component {
         def delayState() = nextState { next() }
 
 
+        nextState {
+            when(!uart.rxf) {
+                r_urd := True
+                next()
+            }
+        }
+        delayState()
+        delayState()
+        nextState {
+            ibuf := uart.rdata.asUInt
+            next()
+        }
+        delayState()
+        delayState()
+        nextState {
+            r_urd := False
+            next()
+        }
+        nextState {
+            when(!uart.txe) {
+                r_uout := ibuf
+                next()
+            }
+        }
+        nextState {
+            r_uwr := True
+            next()
+        }
+        nextState {
+            r_uwr := False
+            //ibuf := 0
+            next()
+        }
+
+        /*
         val recv = nextState {
             when(!uart.rxf) {
                 r_urd := True
@@ -171,6 +208,7 @@ case class UartHandler() extends Component {
                 goto(write)
             }
         }
+        */
     }
 
     when(advance) {
@@ -247,7 +285,7 @@ case class FedUp() extends Component {
 
 
     ram_raddr       := 0
-    ram_read        := !prst && timer < 100
+    ram_read        := !prst && timer < 10 /*100*/
 
     val want        = False
     val bit         = 7 - pbit(2 downto 0)
@@ -267,7 +305,7 @@ case class FedUp() extends Component {
     
 
     when(prst) {
-        when(timer === 39999) {
+        when(timer === 3999/*39999*/) {
             timer := 0
             prst := False
             dout := True
@@ -275,10 +313,10 @@ case class FedUp() extends Component {
             timer := timer + 1
         }
     } otherwise {
-        when(timer === 124) {
+        when(timer ===  13 /*124*/) {
             timer := 0
             
-            when(pbit === 23) {
+            when(pbit === 3 /*23*/) {
                 pbit := 0
 
                 when(px === WIDTH - 1) {
@@ -301,9 +339,9 @@ case class FedUp() extends Component {
         } otherwise {
             timer := timer + 1
 
-            when(want && timer === 84) {
+            when(want && timer === 8 /*84*/) {
                 dout := False
-            } elsewhen(!want && timer === 44) {
+            } elsewhen(!want && timer === 4 /*44*/) {
                 dout := False
             }
         }
