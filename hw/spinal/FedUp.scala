@@ -11,19 +11,15 @@ import java.io.File
 import javax.imageio.ImageIO
 
 
-/* 
-
-    T0H 0.4us  T0L 0.85us
-    T1H 0.8us  T1L 0.45us
-
-    RES low > 50us
-
- */
-
 
 object FedUp {
-    private val WIDTH   = 16
-    private val HEIGHT  = 16
+    private val WIDTH               = 16
+    private val HEIGHT              = 16
+    private val PIXELS              = WIDTH * HEIGHT
+    private val BYTES_PER_PIXEL     = 3
+    private val ADDR_WIDTH          = log2Up(PIXELS * BYTES_PER_PIXEL)
+
+    def atype()                     = UInt(ADDR_WIDTH bits)
 
     private def createRAM() = {
         val ramSize = WIDTH * HEIGHT * 3
@@ -56,51 +52,77 @@ case class FedUp() extends Component {
     import io._
 
 
-    uart.wdata  := 0
-    uart.wr     := False
-    uart.rd     := False
+    uart.wdata      := 0
+    uart.wr         := False
+    uart.rd         := False
 
 
-    val ram = createRAM()
+
+    val ram         = createRAM() //Mem(UInt(8 bits), WIDTH * HEIGHT & BYTES_PER_PIXEL)
+
+    val ram_waddr   = atype()
+    val ram_din     = UInt(8 bits)
+    val ram_write   = Bool()
+
+    val ram_raddr   = atype()
+    val ram_read    = Bool()
+
+    ram.write(
+        enable      = ram_write,
+        address     = ram_waddr,
+        data        = ram_din
+    )
+
+    val ram_dout = ram.readSync(
+        address     = ram_raddr,
+        enable      = ram_read
+    )
+
+    ram_waddr       := 0
+    ram_din         := 0
+    ram_write       := False
 
 
-    val dout    = Reg(Bool()) init(True)
-    gpio_a13    := dout
 
+    val dout        = Reg(Bool()) init(True)
+    gpio_a13        := dout
 
-    val timer   = Reg(UInt(32 bits)) init(0)
-    val prst    = Reg(Bool()) init(False)
-    val px      = Reg(UInt(8 bits)) init(0)
-    val py      = Reg(UInt(8 bits)) init(0)
-    val pbit    = Reg(UInt(5 bits)) init(0)
+    val timer       = Reg(UInt(32 bits)) init(0)
+    val prst        = Reg(Bool()) init(False)
+    val px          = Reg(UInt(8 bits)) init(0)
+    val py          = Reg(UInt(8 bits)) init(0)
+    val pbit        = Reg(UInt(5 bits)) init(0)
 
-    val pg      = pbit < 8
-    val pr      = pbit >= 8 && pbit < 16
-    val pb      = pbit >= 16
+    val pg          = pbit < 8
+    val pr          = pbit >= 8 && pbit < 16
+    val pb          = pbit >= 16
 
-    val apx     = UInt(8 bits)
+    val apx         = UInt(8 bits)
     when(py(0)) {
-        apx     := WIDTH - 1 - px
+        apx         := WIDTH - 1 - px
     } otherwise {
-        apx     := px
+        apx         := px
     }
-    val apy     = HEIGHT - 1 - py
+    val apy         = HEIGHT - 1 - py
 
 
-    val want    = False
-    val bit     = 7 - pbit(2 downto 0)
+    ram_raddr       := 0
+    ram_read        := !prst && timer < 100
+
+    val want        = False
+    val bit         = 7 - pbit(2 downto 0)
     when(pr) {
-        val idx = (apx + apy * WIDTH) * 3
-        val rpxr = ram.readSync(idx(9 downto 0))
-        want    := rpxr(bit)
+        val idx     = (apx + apy * WIDTH) * 3
+        ram_raddr   := idx(9 downto 0)
+        want        := ram_dout(bit)
     } elsewhen(pg) {
-        val idx = ((apx + apy * WIDTH) * 3) + 1
-        val rpxg = ram.readSync(idx(9 downto 0))
-        want    := rpxg(bit)
+        val idx     = ((apx + apy * WIDTH) * 3) + 1
+        ram_raddr   := idx(9 downto 0)
+        want        := ram_dout(bit)
     } elsewhen(pb) {
-        val idx = ((apx + apy * WIDTH) * 3) + 2
-        val rpxb = ram.readSync(idx(9 downto 0))
-        want    := rpxb(bit)
+        val idx     = ((apx + apy * WIDTH) * 3) + 2
+        ram_raddr   := idx(9 downto 0)
+        want        := ram_dout(bit)
     }
     
 
