@@ -1,0 +1,10 @@
+.bloop
+.bsp
+.metals
+.vscode
+*.bin
+*.gtkw
+project
+simWorkspace
+target
+hw/gen
