@@ -1,3 +1,6 @@
+import java.io.File
+import javax.imageio.ImageIO
+
 import scala.collection.mutable.ArrayBuffer
 import scala.math
 
@@ -6,9 +9,6 @@ import spinal.core._
 import spinal.core.sim._
 
 import Util._
-
-import java.io.File
-import javax.imageio.ImageIO
 
 
 
@@ -19,24 +19,11 @@ object FedUp {
     val BYTES_PER_PIXEL     = 3
     val ADDR_WIDTH          = log2Up(PIXELS * BYTES_PER_PIXEL)
 
-    def atype()                     = UInt(ADDR_WIDTH bits)
+    def atype()             = UInt(ADDR_WIDTH bits)
 
     private def createRAM() = {
         val ramSize = WIDTH * HEIGHT * 3
-        val img = ImageIO.read(new File("v.jpg"))
-        val init = new Array[UInt](ramSize)
-        for(y <- 0 until HEIGHT) {
-            for(x <- 0 until WIDTH) {
-                val p = img.getRGB(x, y)
-                val i = (x + y * WIDTH) * 3
-                val r = (p & 0xFF0000) >> 16
-                val g = (p & 0x00FF00) >> 8
-                val b = p & 0x0000FF
-                init(i + 0) = U(r >> 5, 8 bits)
-                init(i + 1) = U(g >> 5, 8 bits)
-                init(i + 2) = U(b >> 5, 8 bits)
-            }
-        }
+        val init = Array.fill(ramSize)(U(0, 8 bits))
         Mem(UInt(8 bits), init)
     }
 }
