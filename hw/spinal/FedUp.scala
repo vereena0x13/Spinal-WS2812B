@@ -55,12 +55,10 @@ case class UartHandler() extends Component {
 
 
     val r_urd       = Reg(Bool()) init(False)
-    val r_uwr       = Reg(Bool()) init(False)
-    val r_uout      = Reg(UInt(8 bits)) init(0)
 
     uart.rd         := r_urd
-    uart.wr         := r_uwr
-    uart.wdata      := r_uout.asBits
+    uart.wr         := False
+    uart.wdata      := 0
 
 
     val r_waddr     = Reg(UInt(ADDR_WIDTH bits)) init(0)
@@ -111,51 +109,6 @@ case class UartHandler() extends Component {
         def delayState() = nextState { next() }
 
 
-        nextState {
-            when(!uart.rxf) {
-                r_urd := True
-                next()
-            }
-        }
-        delayState()
-        nextState {
-            ibuf := uart.rdata.asUInt
-            next()
-        }
-        delayState()
-        nextState {
-            r_urd := False
-            next()
-        }
-        nextState {
-            when(uart.rxf) {
-                next()
-            }
-        }
-
-        delayState()
-
-        nextState {
-            when(!uart.txe) {
-                r_uout := ibuf
-                next()
-            }
-        }
-        nextState {
-            r_uwr := True
-            next()
-        }
-        delayState()
-        delayState()
-        delayState()
-        nextState {
-            r_uwr := False
-            when(uart.txe) {
-                next()
-            }
-        }
-
-        /*
         val recv = nextState {
             when(!uart.rxf) {
                 r_urd := True
@@ -166,25 +119,21 @@ case class UartHandler() extends Component {
         nextState {
             switch(count) {
                 for(i <- 0 until buffer.length) {
-                    is(i) {
-                        buffer(i) := uart.rdata.asUInt
-                        r_uout := uart.rdata.asUInt
-                    }
+                    is(i) { buffer(i) := uart.rdata.asUInt }
                 }
             }
             next()
         }
-        nextState {
-            r_urd   := False
-            when(!uart.txe) {
-                r_uwr   := True
-                count   := count + 1
-                next()
-            }
-        }
         delayState()
         nextState {
-            r_uwr := False
+            r_urd := False
+            count := count + 1
+            next()
+        }
+        nextState {
+            when(uart.rxf) { next() }
+        }
+        nextState {
             when(count === buffer.length) {
                 count := 0
                 next()
@@ -192,8 +141,11 @@ case class UartHandler() extends Component {
                 goto(recv)
             }
         }
+
+        delayState()
+
         val write = nextState {
-            val addr = buffer(0) + buffer(1) * WIDTH + count
+            val addr = ((buffer(0) + buffer(1) * WIDTH) * 3) + count
             r_waddr := addr.resized
             switch(count) {
                 for(i <- 0 until 3) {
@@ -218,7 +170,6 @@ case class UartHandler() extends Component {
                 goto(write)
             }
         }
-        */
     }
 
     when(advance) {

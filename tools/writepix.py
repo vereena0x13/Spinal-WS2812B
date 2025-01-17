@@ -27,7 +27,9 @@ def main():
         dev.write(bytearray([x, y, r, g, b]))
         dev.flush()
 
-    set(1, 0, 0, 0, 0)
+    for x in range(16):
+        for y in range(16):
+            set(x, y, x, y, 0)
             
     
     dev.close()
