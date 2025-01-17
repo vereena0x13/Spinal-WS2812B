@@ -188,12 +188,8 @@ case class FedUp() extends Component {
     val io = new Bundle {
         val uart        = UartBus()
         val gpio_a13    = out(Bool())
-        val gpio_b13    = out(Bool())
     }
     import io._
-
-
-    gpio_b13        := uart.wr
 
 
     // TODO: double buffer

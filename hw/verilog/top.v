@@ -8,8 +8,7 @@ module top(
 	output wire t_uart_wr,
 	output wire t_uart_rd,
 
-	output wire t_gpio_a13,
-	output wire t_gpio_b13
+	output wire t_gpio_a13
 );
 
 	wire clk = t_clk;
@@ -68,8 +67,7 @@ module top(
 		.io_uart_rxf(srxf),
 		.io_uart_wr(uart_wr),
 		.io_uart_rd(uart_rd),
-		.io_gpio_a13(t_gpio_a13),
-		.io_gpio_b13(t_gpio_b13)
+		.io_gpio_a13(t_gpio_a13)
    );
 
 
