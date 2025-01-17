@@ -20,48 +20,14 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     dev = serial.Serial(sys.argv[1], 3_000_000)
-    # time.sleep(0.5)
+    time.sleep(0.5)
 
-    #dev.write(3)
-    #dev.flush()
-    #print(dev.read(1))
-    #dev.write(3)
-    #dev.flush()
-    #print(dev.read(1))
-    #dev.write(0)
-    #dev.flush()
-    #print(dev.read(1))
-    #dev.write(42)
-    #dev.flush()
-    #print(dev.read(1))
-    #dev.write(0)
-    #dev.flush()
-    #print(dev.read(1))
 
-    # 0100 1010
-    for x in range(3):
-        for y in range(3):
-            dev.write(3 + x)
-            dev.flush()
-            print(int.from_bytes(dev.read(1)))
-    
-            dev.write(3 + y)
-            dev.flush()
-            print(int.from_bytes(dev.read(1)))
-            
-            dev.write(42)
-            dev.flush()
-            print(int.from_bytes(dev.read(1)))
-            
-            dev.write(11)
-            dev.flush()
-            print(int.from_bytes(dev.read(1)))
-            
-            dev.write(0)
-            dev.flush()
-            print(int.from_bytes(dev.read(1)))
-        
-            print()
+    def set(x, y, r, g, b):
+        dev.write(bytearray([x, y, r, g, b]))
+        dev.flush()
+
+    set(1, 0, 0, 0, 0)
             
     
     dev.close()

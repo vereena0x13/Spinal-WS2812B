@@ -118,17 +118,23 @@ case class UartHandler() extends Component {
             }
         }
         delayState()
-        delayState()
         nextState {
             ibuf := uart.rdata.asUInt
             next()
         }
         delayState()
-        delayState()
         nextState {
             r_urd := False
             next()
         }
+        nextState {
+            when(uart.rxf) {
+                next()
+            }
+        }
+
+        delayState()
+
         nextState {
             when(!uart.txe) {
                 r_uout := ibuf
@@ -139,10 +145,14 @@ case class UartHandler() extends Component {
             r_uwr := True
             next()
         }
+        delayState()
+        delayState()
+        delayState()
         nextState {
             r_uwr := False
-            //ibuf := 0
-            next()
+            when(uart.txe) {
+                next()
+            }
         }
 
         /*
@@ -225,11 +235,14 @@ case class FedUp() extends Component {
     import FedUp._
 
     val io = new Bundle {
-        val uart = UartBus()
-        val gpio_a13 = out(Bool())
+        val uart        = UartBus()
+        val gpio_a13    = out(Bool())
+        val gpio_b13    = out(Bool())
     }
     import io._
 
+
+    gpio_b13        := uart.wr
 
 
     // TODO: double buffer
@@ -285,7 +298,7 @@ case class FedUp() extends Component {
 
 
     ram_raddr       := 0
-    ram_read        := !prst && timer < 10 /*100*/
+    ram_read        := !prst && timer < 100
 
     val want        = False
     val bit         = 7 - pbit(2 downto 0)
@@ -305,7 +318,7 @@ case class FedUp() extends Component {
     
 
     when(prst) {
-        when(timer === 3999/*39999*/) {
+        when(timer === 39999) {
             timer := 0
             prst := False
             dout := True
@@ -313,10 +326,10 @@ case class FedUp() extends Component {
             timer := timer + 1
         }
     } otherwise {
-        when(timer ===  13 /*124*/) {
+        when(timer === 124) {
             timer := 0
             
-            when(pbit === 3 /*23*/) {
+            when(pbit === 23) {
                 pbit := 0
 
                 when(px === WIDTH - 1) {
@@ -339,9 +352,9 @@ case class FedUp() extends Component {
         } otherwise {
             timer := timer + 1
 
-            when(want && timer === 8 /*84*/) {
+            when(want && timer === 84) {
                 dout := False
-            } elsewhen(!want && timer === 4 /*44*/) {
+            } elsewhen(!want && timer === 44) {
                 dout := False
             }
         }
