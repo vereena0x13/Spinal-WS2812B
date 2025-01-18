@@ -1,3 +1,5 @@
+package gay.vereena.ledmatrix
+
 import scala.collection.mutable.ArrayBuffer
 import scala.math
 
@@ -11,7 +13,7 @@ import FedUp._
 
 
 object GenerateSOC extends App {
-    spinalConfig().generateVerilog(FedUp())
+    spinalConfig().generateVerilog(FedUp(None))
 }
 
 
@@ -20,20 +22,29 @@ object SimulateSOC extends App {
         .withWave
         .withConfig(spinalConfig())
         .compile {
-            val soc = FedUp()
+            // TODO: socConfig, so we can uh-hardcode the matrix size
+            val ramData: Seq[Int] = List.tabulate(16*16)(i => {
+                val y   = 15 - (i / 16)
+                val xx  = i % 16
+                val x   = if((y & 1) == 0) 15 - xx
+                          else             xx
+                x + y * 16
+            }).flatMap(List.fill(3)(_))
+            
+            val soc = FedUp(Some(ramData))
             
             soc.io.uart.rdata.simPublic()
             soc.io.uart.txe.simPublic()
             soc.io.uart.rxf.simPublic()
             soc.io.gpio_a13.simPublic()
-            
+            soc.ram.simPublic()
+
             soc
         }
         .doSim { soc =>
             soc.io.uart.rdata #= 0
             soc.io.uart.txe   #= false
             soc.io.uart.rxf   #= true
-
             
             val clk = soc.clockDomain
 
@@ -49,7 +60,7 @@ object SimulateSOC extends App {
             sleep(1)
 
 
-            for(i <- 0 until 850000) {
+            for(i <- 0 until 1000 * 85) {
                 clk.clockToggle()
                 sleep(1)
                 clk.clockToggle()

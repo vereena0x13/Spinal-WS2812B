@@ -1,3 +1,5 @@
+package gay.vereena.ledmatrix
+
 import spinal.lib._
 import spinal.core._
 import spinal.core.sim._
@@ -43,14 +45,8 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
     val prst            = Reg(Bool()) init(False)
     val px              = Reg(UInt(8 bits)) init(0)
     val py              = Reg(UInt(8 bits)) init(0)
+    val pbyte           = Reg(UInt(2 bits)) init(0)
     val pbit            = Reg(UInt(5 bits)) init(0)
-
-    // TODO: this is stupid; just add another counter lol
-    //       rather than having to check a condition for
-    //       each 3 bytes of a pixel and handle them separately.
-    val pg              = pbit < 8
-    val pr              = pbit >= 8 && pbit < 16
-    val pb              = pbit >= 16
 
     // NOTE TODO: calculation of apx and apy should eventually be 
     // configuratble, once we factor this stuff into its own Component
@@ -60,24 +56,12 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
 
     // NOTE: as should be the source of pixel data, ideally. what if
     //       someone wants to generate pixels on the fly w/o ram, etc.?
-    ram_raddr           := 0
-    ram_read            := !prst && timer < 100
+    val paddr           = apx + apy * width
+    val pbaddr          = pbyte + paddr * 3
+    ram_raddr           := pbaddr(9 downto 0)
+    ram_read            := !prst && timer < 100 // NOTE: this condition is quite loose but it shouldn't matter
 
-    val want            = False
-    val bit             = 7 - pbit(2 downto 0)
-    when(pr) {
-        val idx         = (apx + apy * width) * 3
-        ram_raddr       := idx(9 downto 0)
-        want            := ram_dout(bit)
-    } elsewhen(pg) {
-        val idx         = ((apx + apy * width) * 3) + 1
-        ram_raddr       := idx(9 downto 0)
-        want            := ram_dout(bit)
-    } elsewhen(pb) {
-        val idx         = ((apx + apy * width) * 3) + 2
-        ram_raddr       := idx(9 downto 0)
-        want            := ram_dout(bit)
-    }
+    val want            = ram_dout(7 - pbit(2 downto 0))
     
 
     // TODO: clean this up
@@ -92,21 +76,25 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
     } otherwise {
         when(timer === 124) {
             timer := 0
-            
-            when(pbit === 23) {
+            when(pbit === 7) {
                 pbit := 0
-
-                when(px === width - 1) {
-                    px := 0
-                    when(py === height - 1) {
-                        py := 0
-                        prst := True
+                when(pbyte === 2) {
+                    pbyte := 0
+                    when(px === width - 1) {
+                        px := 0
+                        when(py === height - 1) {
+                            py := 0
+                            prst := True
+                        } otherwise {
+                            py := py + 1
+                            r_dout := True
+                        }
                     } otherwise {
-                        py := py + 1
+                        px := px + 1
                         r_dout := True
-                    }
+                    }                    
                 } otherwise {
-                    px := px + 1
+                    pbyte := pbyte + 1
                     r_dout := True
                 }
             } otherwise {
@@ -115,7 +103,6 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
             }
         } otherwise {
             timer := timer + 1
-
             when(want && timer === 84) {
                 r_dout := False
             } elsewhen(!want && timer === 44) {

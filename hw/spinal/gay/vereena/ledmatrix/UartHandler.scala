@@ -1,3 +1,5 @@
+package gay.vereena.ledmatrix
+
 import spinal.lib._
 import spinal.core._
 import spinal.core.sim._

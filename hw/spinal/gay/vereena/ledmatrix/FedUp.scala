@@ -1,3 +1,5 @@
+package gay.vereena.ledmatrix
+
 import spinal.lib._
 import spinal.core._
 import spinal.core.sim._
@@ -14,7 +16,7 @@ object FedUp {
 }
 
 
-case class FedUp() extends Component {
+case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
     import FedUp._
 
     val io = new Bundle {
@@ -32,6 +34,7 @@ case class FedUp() extends Component {
 
     // TODO: double buffer?
     val ram             = createRAM(matrixCfg.pixels * matrixCfg.bytes_per_pixel)
+    if(initialRamData.isDefined) ram.init(initialRamData.get.map(x => U(x)))
 
     val ram_waddr       = matrixCfg.atype()
     val ram_din         = UInt(8 bits)
