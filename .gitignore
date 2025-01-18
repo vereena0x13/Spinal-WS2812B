@@ -8,3 +8,4 @@ project
 simWorkspace
 target
 hw/gen
+dout_expected.txt
