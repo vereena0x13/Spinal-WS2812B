@@ -1,8 +1,9 @@
 package gay.vereena.ledmatrix
 
-import spinal.lib._
 import spinal.core._
 import spinal.core.sim._
+import spinal.lib._
+import spinal.lib.fsm._
 
 
 /*
@@ -42,7 +43,6 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
     dout.setAsReg() init(True)
 
     val timer           = Reg(UInt(32 bits)) init(0)
-    val prst            = Reg(Bool()) init(False)
     val px              = Reg(UInt(log2Up(cfg.width) bits)) init(0)
     val py              = Reg(UInt(log2Up(cfg.height) bits)) init(0)
     val pbyte           = Reg(UInt(2 bits)) init(0)
@@ -55,7 +55,7 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
 
 
     // NOTE: as should be the source of pixel data, ideally. what if
-    //       someone wants to generate pixels on the fly w/o ram, etc.?
+    //       someone bits to generate pixels on the fly w/o ram, etc.?
     val pbytem          = pbyte.muxDc(
                             0 -> U(1, 2 bits),
                             1 -> U(0, 2 bits),
@@ -64,55 +64,51 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
     val paddr           = apx + apy * width
     val pbaddr          = pbytem + paddr * 3
     ram_raddr           := pbaddr(9 downto 0)
-    ram_read            := !prst && timer < 100 // NOTE: this condition is quite loose but it shouldn't matter
+    ram_read            := timer < 100 // NOTE: this condition is quite loose but it shouldn't matter
 
-    val want            = ram_dout(7 - pbit(2 downto 0))
+    val bit             = ram_dout(7 - pbit(2 downto 0))
     
 
-    // TODO: clean this up
-    when(prst) {
-        when(timer === 39999) {
-            timer := 0
-            prst := False
-            dout := True
-        } otherwise {
-            timer := timer + 1
-        }
-    } otherwise {
-        when(timer === 124) {
-            timer := 0
-            when(pbit === 7) {
-                pbit := 0
-                when(pbyte === 2) {
-                    pbyte := 0
-                    when(px === width - 1) {
-                        px := 0
-                        when(py === height - 1) {
-                            py := 0
-                            prst := True
-                        } otherwise {
-                            py := py + 1
-                            dout := True
-                        }
-                    } otherwise {
-                        px := px + 1
-                        dout := True
-                    }                    
+    val fsm             = new StateMachine {
+        val outputBitShape  = new State with EntryPoint
+        val bitComplete     = new State
+        val byteComplete    = new State
+        val pixelComplete   = new State
+        val rowComplete     = new State
+        val outputRst       = new State
+ 
+        implicit class StateExt(val s: State) {
+            def counting(ctr: UInt, lim: UInt, next: State, refrain: State) = s.whenIsActive {
+                when(ctr === lim) {
+                    ctr := 0
+                    s.goto(next)
                 } otherwise {
-                    pbyte := pbyte + 1
-                    dout := True
+                    ctr := ctr + 1
+                    s.goto(refrain)
                 }
-            } otherwise {
-                pbit := pbit + 1
-                dout := True
             }
-        } otherwise {
-            timer := timer + 1
-            when(want && timer === 84) {
+        }
+ 
+        outputBitShape.counting(timer,  124,        bitComplete,    outputBitShape)
+        bitComplete.counting(   pbit,   7,          byteComplete,   outputBitShape)
+        byteComplete.counting(  pbyte,  2,          pixelComplete,  outputBitShape)
+        pixelComplete.counting( px,     width - 1,  rowComplete,    outputBitShape)
+        rowComplete.counting(   py,     height - 1, outputRst,      outputBitShape)
+        outputRst.counting(     timer,  39999,      outputBitShape, outputRst)
+
+        outputBitShape.whenIsActive {
+            when(bit && timer === 84) {
                 dout := False
-            } elsewhen(!want && timer === 44) {
+            } elsewhen(!bit && timer === 44) {
                 dout := False
             }
         }
+
+        bitComplete.onExit{ 
+            dout := True
+            timer := 0 
+        }
+
+        outputRst.onExit(dout := True)
     }
 }
