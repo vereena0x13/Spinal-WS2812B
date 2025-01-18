@@ -97,11 +97,8 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
         outputRst.counting(     timer,  39999,      outputBitShape, outputRst)
 
         outputBitShape.whenIsActive {
-            when(bit && timer === 84) {
-                dout := False
-            } elsewhen(!bit && timer === 44) {
-                dout := False
-            }
+            val t = Mux(bit, U(84), U(44))
+            when(timer === t) { dout := False }
         }
 
         bitComplete.onExit{ 
