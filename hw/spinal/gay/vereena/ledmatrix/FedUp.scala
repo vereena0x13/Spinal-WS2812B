@@ -54,7 +54,7 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         data            = ram_din
     )
 
-    val ram_dout        = ram.readSync(
+    val ram_dout     = ram.readSync(
         address         = ram_raddr,
         enable          = ram_read
     )
