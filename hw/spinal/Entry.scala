@@ -111,8 +111,11 @@ object SimulateSOC extends App {
             val r       = new BufferedReader(new FileReader("dout_expected.txt"))
             runCycles(N, v => {
                 val w = if(v) '1' else '0'
-                assert(w == r.read(), {
+                val ex = r.read().toChar
+                assert(w == ex, {
                     Seq(
+                        "",
+                        s"expected ${ex}, got ${w}",
                         s"px: ${matrix.px.toLong}",
                         s"py: ${matrix.py.toLong}",
                         s"pbyte: ${matrix.pbyte.toLong}",

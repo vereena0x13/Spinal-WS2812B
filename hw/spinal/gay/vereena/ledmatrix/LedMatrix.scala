@@ -14,6 +14,7 @@ case class Pixel() extends Bundle {
 }
 */
 
+
 case class LedMatrixConfig(
     width: Int,
     height: Int,
@@ -26,7 +27,15 @@ case class LedMatrixConfig(
     def atype()         = UInt(addr_width bits)
 }
 
+object LedMatrix {
+    val TRST    = 39999
+    val T0H     = 44
+    val T1H     = 84
+    val TBIT    = 124
+}
+
 case class LedMatrix(cfg: LedMatrixConfig) extends Component {
+    import LedMatrix._
     import cfg._
 
     val io = new Bundle {
@@ -89,15 +98,15 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
             }
         }
  
-        outputBitShape.counting(timer,  124,        bitComplete,    outputBitShape)
+        outputBitShape.counting(timer,  TBIT,       bitComplete,    outputBitShape)
         bitComplete.counting(   pbit,   7,          byteComplete,   outputBitShape)
         byteComplete.counting(  pbyte,  2,          pixelComplete,  outputBitShape)
         pixelComplete.counting( px,     width - 1,  rowComplete,    outputBitShape)
         rowComplete.counting(   py,     height - 1, outputRst,      outputBitShape)
-        outputRst.counting(     timer,  39999,      outputBitShape, outputRst)
+        outputRst.counting(     timer,  TRST,       outputBitShape, outputRst)
 
         outputBitShape.whenIsActive {
-            val t = Mux(bit, U(84), U(44))
+            val t = Mux(bit, U(T1H), U(T0H))
             when(timer === t) { dout := False }
         }
 
