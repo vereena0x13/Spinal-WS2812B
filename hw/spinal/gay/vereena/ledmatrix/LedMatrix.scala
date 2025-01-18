@@ -28,10 +28,10 @@ case class LedMatrixConfig(
 }
 
 object LedMatrix {
-    val TRST    = 39999
-    val T0H     = 44
-    val T1H     = 84
-    val TBIT    = 124
+    val TRST            = 39999
+    val T0H             = 44
+    val T1H             = 84
+    val TBIT            = 124
 }
 
 case class LedMatrix(cfg: LedMatrixConfig) extends Component {
@@ -58,13 +58,13 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
     val pbit            = Reg(UInt(3 bits)) init(0)
 
     // NOTE TODO: calculation of apx and apy should eventually be 
-    // configuratble, once we factor this stuff into its own Component
+    //            configuratble, once we factor this stuff into its own Component
     val apx             = Mux(py(0), width - 1 - px, px)
     val apy             = height - 1 - py
 
 
-    // NOTE: as should be the source of pixel data, ideally. what if
-    //       someone bits to generate pixels on the fly w/o ram, etc.?
+    // NOTE TODO: as should be the source of pixel data, ideally. what if
+    //            someone bits to generate pixels on the fly w/o ram, etc.?
     val pbytem          = pbyte.muxDc(
                             0 -> U(1, 2 bits),
                             1 -> U(0, 2 bits),
@@ -87,7 +87,7 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
         val outputRst       = new State
  
         implicit class StateExt(val s: State) {
-            def counting(ctr: UInt, lim: UInt, next: State, refrain: State) = s.whenIsActive {
+            def counting(ctr: UInt, lim: UInt, next: State, refrain: State = s) = s.whenIsActive {
                 when(ctr === lim) {
                     ctr := 0
                     s.goto(next)
@@ -98,12 +98,12 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
             }
         }
  
-        outputBitShape.counting(timer,  TBIT,       bitComplete,    outputBitShape  ).onEntry(dout := True)
+        outputBitShape.counting(timer,  TBIT,       bitComplete                     ).onEntry(dout := True)
         bitComplete.counting(   pbit,   7,          byteComplete,   outputBitShape  )
         byteComplete.counting(  pbyte,  2,          pixelComplete,  outputBitShape  )
         pixelComplete.counting( px,     width - 1,  rowComplete,    outputBitShape  )
         rowComplete.counting(   py,     height - 1, outputRst,      outputBitShape  )
-        outputRst.counting(     timer,  TRST,       outputBitShape, outputRst       ).onEntry(dout := False)
+        outputRst.counting(     timer,  TRST,       outputBitShape                  ).onEntry(dout := False)
 
         outputBitShape.whenIsActive {
             val t = Mux(bit, U(T1H), U(T0H))

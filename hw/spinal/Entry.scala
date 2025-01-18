@@ -83,7 +83,7 @@ object SimulateSOC extends App {
                     clk.clockToggle()
                     sleep(1)
 
-                    if(!did && (timer.toLong == 85 || timer.toLong == 45)) {
+                    if(!did && timer.toLong == 45) {
                         did = true
                         onDout(dout.toBoolean)                        
                     } else if(did && timer.toLong == 124) {
