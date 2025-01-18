@@ -20,6 +20,7 @@ case class LedMatrixConfig(
     val pixels          = width * height
     val bytes_per_pixel = 3
     val addr_width      = log2Up(pixels * bytes_per_pixel)
+    val memory_size     = pixels * bytes_per_pixel
 
     def atype()         = UInt(addr_width bits)
 }
@@ -38,13 +39,12 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
 
     
     // TODO: don't constantly refresh at max speed; only on change
-    val r_dout          = Reg(Bool()) init(True)
-    dout                := r_dout
+    dout.setAsReg() init(True)
 
     val timer           = Reg(UInt(32 bits)) init(0)
     val prst            = Reg(Bool()) init(False)
-    val px              = Reg(UInt(8 bits)) init(0)
-    val py              = Reg(UInt(8 bits)) init(0)
+    val px              = Reg(UInt(log2Up(cfg.width) bits)) init(0)
+    val py              = Reg(UInt(log2Up(cfg.height) bits)) init(0)
     val pbyte           = Reg(UInt(2 bits)) init(0)
     val pbit            = Reg(UInt(5 bits)) init(0)
 
@@ -56,8 +56,13 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
 
     // NOTE: as should be the source of pixel data, ideally. what if
     //       someone wants to generate pixels on the fly w/o ram, etc.?
+    val pbytem          = pbyte.muxDc(
+                            0 -> U(1, 2 bits),
+                            1 -> U(0, 2 bits),
+                            2 -> U(2, 2 bits)
+                        )
     val paddr           = apx + apy * width
-    val pbaddr          = pbyte + paddr * 3
+    val pbaddr          = pbytem + paddr * 3
     ram_raddr           := pbaddr(9 downto 0)
     ram_read            := !prst && timer < 100 // NOTE: this condition is quite loose but it shouldn't matter
 
@@ -69,7 +74,7 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
         when(timer === 39999) {
             timer := 0
             prst := False
-            r_dout := True
+            dout := True
         } otherwise {
             timer := timer + 1
         }
@@ -87,26 +92,26 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
                             prst := True
                         } otherwise {
                             py := py + 1
-                            r_dout := True
+                            dout := True
                         }
                     } otherwise {
                         px := px + 1
-                        r_dout := True
+                        dout := True
                     }                    
                 } otherwise {
                     pbyte := pbyte + 1
-                    r_dout := True
+                    dout := True
                 }
             } otherwise {
                 pbit := pbit + 1
-                r_dout := True
+                dout := True
             }
         } otherwise {
             timer := timer + 1
             when(want && timer === 84) {
-                r_dout := False
+                dout := False
             } elsewhen(!want && timer === 44) {
-                r_dout := False
+                dout := False
             }
         }
     }

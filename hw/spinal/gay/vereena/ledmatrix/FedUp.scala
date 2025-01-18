@@ -9,8 +9,14 @@ import Util._
 
 
 object FedUp {
-    private def createRAM(size: Int) = {
-        val init = Array.fill(size)(U(0, 8 bits))
+    private def createRAM(size: Int, initialRamData: Option[Seq[Int]]) = {
+        val init = initialRamData match {
+            case Some(data) => {
+                require(size == data.size, s"${size} != ${data.size}")
+                data.map(U(_))
+            }
+            case None => Seq.fill(size)(U(0, 8 bits))
+        }
         Mem(UInt(8 bits), init)
     }
 }
@@ -33,8 +39,7 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
 
 
     // TODO: double buffer?
-    val ram             = createRAM(matrixCfg.pixels * matrixCfg.bytes_per_pixel)
-    if(initialRamData.isDefined) ram.init(initialRamData.get.map(x => U(x)))
+    val ram             = createRAM(matrixCfg.memory_size, initialRamData)
 
     val ram_waddr       = matrixCfg.atype()
     val ram_din         = UInt(8 bits)

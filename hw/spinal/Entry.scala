@@ -1,5 +1,3 @@
-package gay.vereena.ledmatrix
-
 import scala.collection.mutable.ArrayBuffer
 import scala.math
 
@@ -7,8 +5,8 @@ import spinal.lib._
 import spinal.core._
 import spinal.core.sim._
 
-import Util._
-import FedUp._
+import gay.vereena.ledmatrix.Util._
+import gay.vereena.ledmatrix.FedUp
 
 
 
@@ -28,8 +26,9 @@ object SimulateSOC extends App {
                 val xx  = i % 16
                 val x   = if((y & 1) == 0) 15 - xx
                           else             xx
-                x + y * 16
-            }).flatMap(List.fill(3)(_))
+                val j = x + y * 16
+                (j & 0b00111111)
+            }).flatMap(j => List(j, j | 1, j | 2))
             
             val soc = FedUp(Some(ramData))
             
