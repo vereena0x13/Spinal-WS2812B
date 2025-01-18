@@ -92,11 +92,13 @@ object SimulateSOC extends App {
                 }
             }
 
+            val matrix  = soc.matrix
             val N       = 1000 * 250
             var col     = 0
-            /*
+
+            
+            /*          
             val w = new PrintWriter(new FileWriter("dout_expected.txt"))
-            var col = 0
             runCycles(N, v => {
                 w.write(if(v) '1' else '0')
                 col += 1
@@ -107,7 +109,7 @@ object SimulateSOC extends App {
             })
             w.close()
             */
-            val matrix  = soc.matrix
+
             val r       = new BufferedReader(new FileReader("dout_expected.txt"))
             runCycles(N, v => {
                 val w = if(v) '1' else '0'
