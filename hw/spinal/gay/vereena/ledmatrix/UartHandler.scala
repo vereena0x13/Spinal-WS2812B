@@ -12,8 +12,6 @@ import spinal.lib.fsm._
 //       furthermore, it should not be the uart handling code's
 //       responsibility to handle writing data into RAM...
 case class UartHandler(cfg: LedMatrixConfig) extends Component {
-    import FedUp._
-
     val io = new Bundle {
         val uart                = UartBus()
         val mem_waddr           = out(cfg.atype())
@@ -38,7 +36,7 @@ case class UartHandler(cfg: LedMatrixConfig) extends Component {
 
     val fsm                     = new StateMachine {
         val waitByte            = new State with EntryPoint
-        val recvDelay           = new StateDelay(1)    
+        val recvDelay           = new State  
         val recvByte            = new State
         val waitRxf             = new State
 
@@ -52,21 +50,23 @@ case class UartHandler(cfg: LedMatrixConfig) extends Component {
             }
         }
 
-        recvDelay.whenCompleted(goto(recvByte))
+        recvDelay.whenIsActive(goto(recvByte))
 
         recvByte.whenIsActive {
             buffer(index)       := uart.rdata.asUInt
             uart.rd             := False
-            index               := index + 1
             goto(waitRxf)
         }
 
         waitRxf.whenIsActive {
             when(uart.rxf) {
-                when(index === buffer_size) {
+                when(index === buffer_size-1) {
                     index       := 0
                     goto(writeByte)
-                } otherwise(goto(waitByte))
+                } otherwise {
+                    index       := index + 1
+                    goto(waitByte)
+                }
             }
         }
         
