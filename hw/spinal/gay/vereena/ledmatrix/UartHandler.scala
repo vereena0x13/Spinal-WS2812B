@@ -3,6 +3,7 @@ package gay.vereena.ledmatrix
 import spinal.core._
 import spinal.lib._
 import spinal.lib.fsm._
+import gay.vereena.ledmatrix.FSMExtensions.StateExt
 
 
 // TODO: eventually we'd like this to be far more general;
@@ -14,6 +15,7 @@ import spinal.lib.fsm._
 case class UartHandler(cfg: LedMatrixConfig) extends Component {
     val io = new Bundle {
         val uart                = UartBus()
+
         val mem_waddr           = out(cfg.atype())
         val mem_wdata           = out(UInt(8 bits))
         val mem_write           = out(Bool())
@@ -36,7 +38,7 @@ case class UartHandler(cfg: LedMatrixConfig) extends Component {
 
     val fsm                     = new StateMachine {
         val waitByte            = new State with EntryPoint
-        val recvDelay           = new State  
+        val recvDelay           = new State
         val recvByte            = new State
         val waitRxf             = new State
 
@@ -58,18 +60,7 @@ case class UartHandler(cfg: LedMatrixConfig) extends Component {
             goto(waitRxf)
         }
 
-        waitRxf.whenIsActive {
-            when(uart.rxf) {
-                when(index === buffer_size-1) {
-                    index       := 0
-                    goto(writeByte)
-                } otherwise {
-                    index       := index + 1
-                    goto(waitByte)
-                }
-            }
-        }
-        
+        waitRxf.counting(index, buffer_size-1, writeByte, waitByte, cond = Some(uart.rxf))
             
         writeByte.whenIsActive {
             val addr            = ((buffer(0) + buffer(1) * cfg.width) * 3) + index
@@ -79,15 +70,6 @@ case class UartHandler(cfg: LedMatrixConfig) extends Component {
             goto(writeLoop)
         }
 
-        writeLoop.whenIsActive {
-            mem_write           := False
-            when(index === 2) {
-                index           := 0
-                goto(waitByte)
-            } otherwise {
-                index           := index + 1
-                goto(writeByte)
-            }
-        }
+        writeLoop.counting(index, 2, waitByte, writeByte).whenIsActive(mem_write := False)
     }
 }

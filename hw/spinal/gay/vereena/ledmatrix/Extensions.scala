@@ -4,9 +4,15 @@ import spinal.core._
 import spinal.lib.fsm._
 
 object FSMExtensions {
-    // TODO: why didn't i use a StateFsm for this? :sob: try doing that :P
     implicit class StateExt(val s: State) {
-        def counting(ctr: UInt, lim: UInt, next: State, refrain: State = s) = s.whenIsActive {
+        def counting(ctr: UInt, lim: UInt, next: State, refrain: State = s, cond: Option[Bool] = None) = s.whenIsActive {
+            cond match {
+                case None       => _counting(ctr, lim, next, refrain)
+                case Some(c)    => when(c) { _counting(ctr, lim, next, refrain) }
+            }
+        }
+
+        private def _counting(ctr: UInt, lim: UInt, next: State, refrain: State) = {
             when(ctr === lim) {
                 ctr := 0
                 s.goto(next)
