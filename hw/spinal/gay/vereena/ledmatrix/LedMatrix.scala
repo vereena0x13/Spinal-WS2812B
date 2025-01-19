@@ -5,6 +5,8 @@ import spinal.core.sim._
 import spinal.lib._
 import spinal.lib.fsm._
 
+import FSMExtensions._
+
 
 /*
 case class Pixel() extends Bundle {
@@ -21,8 +23,8 @@ case class LedMatrixConfig(
 ) {
     val pixels          = width * height
     val bytes_per_pixel = 3
-    val addr_width      = log2Up(pixels * bytes_per_pixel)
     val memory_size     = pixels * bytes_per_pixel
+    val addr_width      = log2Up(memory_size)
 
     def atype()         = UInt(addr_width bits)
 }
@@ -41,9 +43,9 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
     val io = new Bundle {
         val dout        = out(Bool())
 
-        val ram_raddr   = out(atype())
-        val ram_read    = out(Bool())
-        val ram_dout    = in(UInt(8 bits))
+        val mem_raddr   = out(atype())
+        val mem_read    = out(Bool())
+        val mem_rdata   = in(UInt(8 bits))
     }
     import io._
 
@@ -64,7 +66,7 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
 
 
     // NOTE TODO: what should be the source of pixel data? what if
-    //            someone bits to generate pixels on the fly w/o ram, etc.?
+    //            someone bits to generate pixels on the fly w/o mem, etc.?
     //            perhaps we have a PixelBus that can emit read requests (from here)
     //            and get pixels as a response?
     val pbytem          = pbyte.muxDc(
@@ -74,8 +76,8 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
                         )
     val paddr           = apx + apy * width
     val pbaddr          = pbytem + paddr * 3
-    ram_raddr           := pbaddr(9 downto 0)
-    ram_read            := False
+    mem_raddr           := pbaddr(9 downto 0)
+    mem_read            := False
 
     val curByte         = Reg(UInt(8 bits))
     val bit             = curByte(7 - pbit)
@@ -90,19 +92,7 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
         val rowComplete     = new State
         val outputRst       = new State
  
-        implicit class StateExt(val s: State) {
-            def counting(ctr: UInt, lim: UInt, next: State, refrain: State = s) = s.whenIsActive {
-                when(ctr === lim) {
-                    ctr := 0
-                    s.goto(next)
-                } otherwise {
-                    ctr := ctr + 1
-                    if(s != refrain) s.goto(refrain)
-                }
-            }
-        }
- 
-        readNextByte.counting(  timer,  1,          outputBitShape                  ).whenIsActive(ram_read := True).onExit(curByte := ram_dout)
+        readNextByte.counting(  timer,  1,          outputBitShape                  ).whenIsActive(mem_read := True).onExit(curByte := mem_rdata)
         outputBitShape.counting(timer,  TBIT,       bitComplete                     ).onEntry(dout := True)
         bitComplete.counting(   pbit,   7,          byteComplete,   readNextByte    )
         byteComplete.counting(  pbyte,  2,          pixelComplete,  readNextByte    )

@@ -8,8 +8,8 @@ import spinal.lib._
 import spinal.core._
 import spinal.core.sim._
 
+import gay.vereena.ledmatrix._
 import gay.vereena.ledmatrix.Util._
-import gay.vereena.ledmatrix.FedUp
 
 
 
@@ -131,5 +131,71 @@ object SimulateSOC extends App {
                 }
             })
             r.close()
+        }
+}
+
+
+object SimulateUartHandler extends App {
+    SimConfig
+        .withWave
+        .withConfig(spinalConfig())
+        .compile {
+            val dut = UartHandler(LedMatrixConfig(16, 16))
+
+            dut.io.uart.rxf.simPublic()
+            dut.io.uart.rd.simPublic()
+            dut.io.uart.rdata.simPublic()
+            dut.io.mem_waddr.simPublic()
+            dut.io.mem_wdata.simPublic()
+            dut.io.mem_write.simPublic()
+
+            dut
+        }
+        .doSim { dut =>
+            dut.io.uart.rdata #= 0
+            dut.io.uart.rxf   #= true
+            
+            val clk = dut.clockDomain
+
+            clk.fallingEdge()
+            sleep(0)
+
+            clk.assertReset()
+            for(_ <- 0 until 10) {
+                clk.clockToggle()
+                sleep(1)
+            }
+            clk.deassertReset()
+            sleep(1)
+            
+
+            def tickOnce(): Unit = {
+                clk.clockToggle()
+                sleep(1)
+                clk.clockToggle()
+                sleep(1)
+            }
+
+            def tick(n: Int): Unit = { for(_ <- 0 until n) { tickOnce() } }
+            def tickUntil(c: () => Boolean): Unit = { while(!c()) tickOnce() }
+
+            tick(5)
+
+
+            import dut.io._
+            import dut.io.uart._
+
+            for(i <- 0 until 5) {
+                rxf     #= false
+                tickUntil(() => rd.toBoolean)
+
+                rdata   #= 42 + i
+                tick(4)
+
+                rxf     #= true 
+                tick(4)
+            }
+
+            tick(30)
         }
 }

@@ -1,13 +1,22 @@
 NAME=top
 OPENOCD_CFG=neso.cfg
+REPORT_DIR=rpt
+REPORT_LAST_DIR=$(REPORT_DIR)/last
 
 .PHONY: clean synth program modftdi
 
 clean:
 	rm -f $(NAME).log
 	rm -f $(NAME).bit
+	rm -f rpt/*.rpt
+	rm -f rpt/last/*.rpt
 
-synth: clean
+synth:
+	rm -f $(NAME).log
+	rm -f $(NAME).bit
+	mkdir -p $(REPORT_LAST_DIR)
+	rm -f $(REPORT_LAST_DIR)/*.rpt
+	find $(REPORT_DIR) -type f -exec mv {} $(REPORT_LAST_DIR) \;
 	vivado -mode batch -log $(NAME).log -nojournal -source $(NAME).tcl
 
 program:

@@ -42,7 +42,7 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
     val ram             = createRAM(matrixCfg.memory_size, initialRamData)
 
     val ram_waddr       = matrixCfg.atype()
-    val ram_din         = UInt(8 bits)
+    val mem_wdata       = UInt(8 bits)
     val ram_write       = Bool()
 
     val ram_raddr       = matrixCfg.atype()
@@ -51,10 +51,10 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
     ram.write(
         enable          = ram_write,
         address         = ram_waddr,
-        data            = ram_din
+        data            = mem_wdata
     )
 
-    val ram_dout     = ram.readSync(
+    val ram_rdata       = ram.readSync(
         address         = ram_raddr,
         enable          = ram_read
     )
@@ -62,15 +62,15 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
 
     val uartHandler     = UartHandler(matrixCfg)
     uartHandler.io.uart <> uart
-    ram_waddr           := uartHandler.io.ram_waddr
-    ram_din             := uartHandler.io.ram_din
-    ram_write           := uartHandler.io.ram_write
+    ram_waddr           := uartHandler.io.mem_waddr
+    mem_wdata           := uartHandler.io.mem_wdata
+    ram_write           := uartHandler.io.mem_write
 
 
 
     val matrix          = LedMatrix(matrixCfg)
     gpio_a13            := matrix.io.dout
-    ram_raddr           := matrix.io.ram_raddr
-    ram_read            := matrix.io.ram_read
-    matrix.io.ram_dout  := ram_dout
+    ram_raddr           := matrix.io.mem_raddr
+    ram_read            := matrix.io.mem_read
+    matrix.io.mem_rdata := ram_rdata
 }
