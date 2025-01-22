@@ -3,6 +3,7 @@ package gay.vereena.ledmatrix
 import spinal.core._
 import spinal.lib.fsm._
 
+
 object FSMExtensions {
     implicit class StateExt(val s: State) {
         def counting(ctr: UInt, lim: UInt, next: State, refrain: State = s, cond: Option[Bool] = None) = s.whenIsActive {
