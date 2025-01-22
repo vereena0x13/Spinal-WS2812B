@@ -44,7 +44,7 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
     // TODO: don't constantly refresh at max speed; only on change
     dout.setAsReg() init(True)
 
-    val timer               = Reg(UInt(32 bits)) init(0)
+    val timer               = Reg(UInt(log2Up(TRST) bits)) init(0)
     val px                  = Reg(UInt(log2Up(cfg.width) bits)) init(0)
     val py                  = Reg(UInt(log2Up(cfg.height) bits)) init(0)
     val pbyte               = Reg(UInt(2 bits)) init(0)
