@@ -3,7 +3,8 @@ package gay.vereena.ledmatrix
 import spinal.core._
 import spinal.lib._
 import spinal.lib.fsm._
-import gay.vereena.ledmatrix.FSMExtensions.StateExt
+
+import FSMExtensions._
 
 
 // TODO: eventually we'd like this to be far more general;

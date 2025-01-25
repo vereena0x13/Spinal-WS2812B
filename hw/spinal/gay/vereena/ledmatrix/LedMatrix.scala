@@ -49,6 +49,7 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
     val py                  = Reg(UInt(log2Up(cfg.height) bits)) init(0)
     val pbyte               = Reg(UInt(2 bits)) init(0)
     val pbit                = Reg(UInt(3 bits)) init(0)
+    
 
     // NOTE TODO: calculation of apx and apy should be configurable
     val apx                 = Mux(py(0), width - 1 - px, px)

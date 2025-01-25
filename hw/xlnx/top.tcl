@@ -35,4 +35,5 @@ report_design_analysis -logic_level_distribution \
     -file $rptDir/post_route_vios.rpt
 
 
-write_bitstream -force top.bit
+
+write_bitstream -bin_file -force top.bit

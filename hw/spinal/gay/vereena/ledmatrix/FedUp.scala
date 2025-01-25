@@ -67,7 +67,6 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
     ram_write           := uartHandler.io.mem_write
 
 
-
     val matrix          = LedMatrix(matrixCfg)
     gpio_a13            := matrix.io.dout
     ram_raddr           := matrix.io.mem_raddr

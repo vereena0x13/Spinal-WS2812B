@@ -24,3 +24,12 @@ set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN D9 } [get_ports {t_uart_rd
 
 
 set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN A13  LOC IOB_X0Y131  SLEW FAST } [get_ports {t_gpio_a13}]
+
+
+
+
+set_property BITSTREAM.GENERAL.COMPRESS FALSE [current_design]
+set_property BITSTREAM.CONFIG.CONFIGRATE 12 [current_design]
+set_property BITSTREAM.CONFIG.SPI_32BIT_ADDR hNo [current_design]
+set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
+set_property BITSTREAM.CONFIG.SPI_FALL_EDGE YES [current_design]
