@@ -140,7 +140,7 @@ object SimulateUartHandler extends App {
         .withWave
         .withConfig(spinalConfig())
         .compile {
-            val dut = UartHandler(LedMatrixConfig(16, 16))
+            val dut = UartHandler(LedMatrixConfig(16, 16, 1, 1))
 
             dut.io.uart.rxf.simPublic()
             dut.io.uart.rd.simPublic()

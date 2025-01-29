@@ -14,10 +14,12 @@ import FSMExtensions._
 //       furthermore, it should not be the uart handling code's
 //       responsibility to handle writing data into RAM...
 case class UartHandler(cfg: LedMatrixConfig) extends Component {
+    import cfg._
+
     val io = new Bundle {
         val uart                = UartBus()
 
-        val mem_waddr           = out(cfg.atype())
+        val mem_waddr           = out(atype())
         val mem_wdata           = out(UInt(8 bits))
         val mem_write           = out(Bool())
     }
@@ -64,7 +66,7 @@ case class UartHandler(cfg: LedMatrixConfig) extends Component {
         waitRxf.counting(index, buffer_size-1, writeByte, waitByte, cond = Some(uart.rxf))
             
         writeByte.whenIsActive {
-            val addr            = ((buffer(0) + buffer(1) * cfg.width) * 3) + index
+            val addr            = ((buffer(0) + buffer(1) * matrixWidth) * 3) + index
             mem_waddr           := addr.resized
             mem_wdata           := buffer(index + 2)
             mem_write           := True

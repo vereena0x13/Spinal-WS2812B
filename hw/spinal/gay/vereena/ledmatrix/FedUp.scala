@@ -33,8 +33,10 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
 
 
     val matrixCfg = LedMatrixConfig(
-        width           = 16,
-        height          = 16,
+        matrixWidth     = 16,
+        matrixHeight    = 16,
+        tilesX          = 2,
+        tilesY          = 1
     )
 
 
