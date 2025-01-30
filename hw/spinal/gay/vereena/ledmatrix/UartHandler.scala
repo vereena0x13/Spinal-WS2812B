@@ -66,7 +66,7 @@ case class UartHandler(cfg: LedMatrixConfig) extends Component {
         waitRxf.counting(index, buffer_size-1, writeByte, waitByte, cond = Some(uart.rxf))
             
         writeByte.whenIsActive {
-            val addr            = ((buffer(0) + buffer(1) * matrixWidth) * 3) + index
+            val addr            = ((buffer(0) + buffer(1) * total_width) * 3) + index
             mem_waddr           := addr.resized
             mem_wdata           := buffer(index + 2)
             mem_write           := True

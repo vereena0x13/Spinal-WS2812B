@@ -33,11 +33,12 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
 
 
     val matrixCfg = LedMatrixConfig(
-        matrixWidth     = 16,
-        matrixHeight    = 16,
-        tilesX          = 2,
-        tilesY          = 1
+        tile_width      = 16,
+        tile_height     = 16,
+        tiles_x         = 2,
+        tiles_y         = 1
     )
+    println(matrixCfg)
 
 
     // TODO: double buffer?

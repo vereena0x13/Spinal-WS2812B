@@ -1,5 +1,7 @@
 package gay.vereena.ledmatrix
 
+import scala.math.max
+
 import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
@@ -9,19 +11,39 @@ import FSMExtensions._
 
 
 case class LedMatrixConfig(
-    matrixWidth: Int,
-    matrixHeight: Int,
-    tilesX: Int,
-    tilesY: Int
+    tile_width: Int,
+    tile_height: Int,
+    tiles_x: Int,
+    tiles_y: Int
 ) {
-    val matrixPixels            = matrixWidth * matrixHeight
-    val tiles                   = tilesX * tilesY
-    val totalPixels             = tiles * matrixPixels
+    val tiles                   = tiles_x       *   tiles_y
+
+    val total_width             = tile_width    *   tiles_x
+    val total_height            = tile_height   *   tiles_y
+    
+    val tile_pixels             = tile_width    *   tile_height
+    val total_pixels            = tiles         *   tile_pixels
+
     val bytes_per_pixel         = 3
-    val memory_size             = totalPixels * bytes_per_pixel
+    val memory_size             = total_pixels  *   bytes_per_pixel
     val addr_width              = log2Up(memory_size)
 
     def atype()                 = UInt(addr_width bits)
+
+    override def toString(): String = {
+        val sb = new StringBuilder
+        sb.append("LedMatrixConfig {\n")
+        sb.append(s"    tiles = $tiles,\n")
+        sb.append(s"    total_width = $total_width,\n")
+        sb.append(s"    total_height = $total_height,\n")
+        sb.append(s"    tile_pixels = $tile_pixels,\n")
+        sb.append(s"    total_pixels = $total_pixels,\n")
+        sb.append(s"    bytes_per_pixel = $bytes_per_pixel,\n")
+        sb.append(s"    memory_size = $memory_size,\n")
+        sb.append(s"    addr_width = $addr_width\n")
+        sb.append("}")
+        sb.toString
+    }
 }
 
 object LedMatrix {
@@ -49,17 +71,18 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
     dout.setAsReg() init(True)
 
     val timer                   = Reg(UInt(log2Up(TRST) bits)) init(0)
-    val tx                      = Reg(UInt(log2Up(tilesX) bits)) init(0)
-    val ty                      = Reg(UInt(log2Up(tilesY) bits)) init(0)
-    val px                      = Reg(UInt(log2Up(matrixWidth) bits)) init(0)
-    val py                      = Reg(UInt(log2Up(matrixHeight) bits)) init(0)
+    val tx                      = Reg(UInt(max(log2Up(tiles_x), 1) bits)) init(0)
+    val ty                      = Reg(UInt(max(log2Up(tiles_y), 1) bits)) init(0)
+    val px                      = Reg(UInt(log2Up(tile_width) bits)) init(0)
+    val py                      = Reg(UInt(log2Up(tile_height) bits)) init(0)
     val pbyte                   = Reg(UInt(2 bits)) init(0)
     val pbit                    = Reg(UInt(3 bits)) init(0)
+    val curByte                 = Reg(UInt(8 bits))
     
 
     // NOTE TODO: calculation of apx and apy should be configurable
-    val apx                     = Mux(py(0), matrixWidth - 1 - px, px)
-    val apy                     = matrixHeight - 1 - py
+    val apx                     = Mux(py(0), tile_width - 1 - px, px)
+    val apy                     = tile_height - 1 - py
 
 
     // NOTE TODO: what should be the source of pixel data? what if
@@ -71,12 +94,13 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
                                     1 -> U(0, 2 bits),
                                     2 -> U(2, 2 bits)
                                 )
-    val paddr                   = apx + apy * matrixWidth
-    val pbaddr                  = pbytem + paddr * 3
-    mem_raddr                   := pbaddr((addr_width - 1) downto 0)
+    val gx                      = apx + tx * tile_width
+    val gy                      = apy + ty * tile_height
+    val pidx                    = gx + gy * total_width
+    val paddr                   = pbytem + pidx * 3
+    mem_raddr                   := paddr((addr_width - 1) downto 0)
     mem_read                    := False
 
-    val curByte                 = Reg(UInt(8 bits))
     val bit                     = curByte(7 - pbit)
     
 
@@ -86,20 +110,20 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
         val bitComplete         = new State
         val byteComplete        = new State
         val pixelComplete       = new State
-        val matrixRowComplete   = new State
+        val rowComplete         = new State
         val tileComplete        = new State
         val tileRowComplete     = new State
         val outputRst           = new State
  
-        readNextByte.counting(      timer,  1,                  outputBitShape                      ).whenIsActive(mem_read := True).onExit(curByte := mem_rdata)
-        outputBitShape.counting(    timer,  TBIT,               bitComplete                         ).onEntry(dout := True)
-        bitComplete.counting(       pbit,   7,                  byteComplete,       readNextByte    )
-        byteComplete.counting(      pbyte,  2,                  pixelComplete,      readNextByte    )
-        pixelComplete.counting(     px,     matrixWidth - 1,    matrixRowComplete,  readNextByte    )
-        matrixRowComplete.counting( py,     matrixHeight - 1,   tileComplete,       readNextByte    )
-        tileComplete.counting(      tx,     tilesX - 1,         tileRowComplete,    readNextByte    )
-        tileRowComplete.counting(   ty,     tilesY - 1,         outputRst,          readNextByte    )
-        outputRst.counting(         timer,  TRST,               readNextByte                        ).onEntry(dout := False)
+        readNextByte.counting(      timer,  1,              outputBitShape                      ).whenIsActive(mem_read := True).onExit(curByte := mem_rdata)
+        outputBitShape.counting(    timer,  TBIT,           bitComplete                         ).onEntry(dout := True)
+        bitComplete.counting(       pbit,   7,              byteComplete,       readNextByte    )
+        byteComplete.counting(      pbyte,  2,              pixelComplete,      readNextByte    )
+        pixelComplete.counting(     px,     tile_width-1,   rowComplete,        readNextByte    )
+        rowComplete.counting(       py,     tile_height-1,  tileComplete,       readNextByte    )
+        tileComplete.counting(      tx,     tiles_x-1,      tileRowComplete,    readNextByte    )
+        tileRowComplete.counting(   ty,     tiles_y-1,      outputRst,          readNextByte    )
+        outputRst.counting(         timer,  TRST,           readNextByte                        ).onEntry(dout := False)
 
         outputBitShape.whenIsActive {
             val t = Mux(bit, U(T1H), U(T0H))

@@ -23,11 +23,11 @@ object GenerateSOC extends App {
 
 object SimulateSOC extends App {
     SimConfig
-        .withWave
+        .withFstWave
         .withConfig(spinalConfig())
         .compile {
             // TODO: socConfig, so we can uh-hardcode the matrix size
-            val ramData: Seq[Int] = List.tabulate(16*16)(i => {
+            val ramData: Seq[Int] = List.tabulate(32*16)(i => {
                 val y   = 15 - (i / 16)
                 val xx  = i % 16
                 val x   = if((y & 1) == 0) 15 - xx
@@ -93,8 +93,9 @@ object SimulateSOC extends App {
             }
 
             val matrix  = soc.matrix
-            val N       = 1000 * 250
+            val N       = 1000 * 500
             var col     = 0
+            runCycles(N, _ => ())
 
             
             /*          
@@ -110,6 +111,7 @@ object SimulateSOC extends App {
             w.close()
             */
 
+            /*
             val r       = new BufferedReader(new FileReader("dout_expected.txt"))
             runCycles(N, v => {
                 val w = if(v) '1' else '0'
@@ -131,13 +133,14 @@ object SimulateSOC extends App {
                 }
             })
             r.close()
+            */
         }
 }
 
 
 object SimulateUartHandler extends App {
     SimConfig
-        .withWave
+        .withFstWave
         .withConfig(spinalConfig())
         .compile {
             val dut = UartHandler(LedMatrixConfig(16, 16, 1, 1))
