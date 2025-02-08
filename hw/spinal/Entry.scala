@@ -42,14 +42,14 @@ object SimulateSOC extends App {
             soc.io.uart.txe.simPublic()
             soc.io.uart.rxf.simPublic()
             soc.io.gpio_a13.simPublic()
-            soc.ram.simPublic()
-            soc.matrix.io.simPublic()
-            soc.matrix.io.dout.simPublic()
-            soc.matrix.timer.simPublic()
-            soc.matrix.px.simPublic()
-            soc.matrix.py.simPublic()
-            soc.matrix.pbyte.simPublic()
-            soc.matrix.pbit.simPublic()
+            soc.matrix.ram.simPublic()
+            soc.matrix.ledMatrix.io.simPublic()
+            soc.matrix.ledMatrix.io.dout.simPublic()
+            soc.matrix.ledMatrix.timer.simPublic()
+            soc.matrix.ledMatrix.px.simPublic()
+            soc.matrix.ledMatrix.py.simPublic()
+            soc.matrix.ledMatrix.pbyte.simPublic()
+            soc.matrix.ledMatrix.pbit.simPublic()
             
 
             soc
@@ -74,8 +74,8 @@ object SimulateSOC extends App {
 
 
             def runCycles(n: Int, onDout: (Boolean) => Unit): Unit = {
-                val timer   = soc.matrix.timer
-                val dout    = soc.matrix.io.dout
+                val timer   = soc.matrix.ledMatrix.timer
+                val dout    = soc.matrix.ledMatrix.io.dout
                 var did     = false
                 for(i <- 0 until n) {
                     clk.clockToggle()
@@ -93,7 +93,7 @@ object SimulateSOC extends App {
             }
 
             val matrix  = soc.matrix
-            val N       = 1000 * 500
+            val N       = 1000 * 50
             var col     = 0
             runCycles(N, _ => ())
 

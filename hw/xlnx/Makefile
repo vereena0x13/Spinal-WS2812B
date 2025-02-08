@@ -10,14 +10,19 @@ clean:
 	rm -f $(NAME).bit
 	rm -f rpt/*.rpt
 	rm -f rpt/last/*.rpt
+	rm -f rpt/*.txt
+	rm -f rpt/last/*.txt
 
 synth:
 	rm -f $(NAME).log
 	rm -f $(NAME).bit
 	mkdir -p $(REPORT_LAST_DIR)
 	rm -f $(REPORT_LAST_DIR)/*.rpt
+	rm -f $(REPORT_LAST_DIR)/*.txt
 	find $(REPORT_DIR) -type f -exec mv {} $(REPORT_LAST_DIR) \;
 	vivado -mode batch -log $(NAME).log -nojournal -source $(NAME).tcl
+	mv clockInfo.txt $(REPORT_DIR)
+
 
 program:
 	openocd -f $(OPENOCD_CFG) -c "init" -c "pld load 0 $(NAME).bit" -c "shutdown"

@@ -8,7 +8,8 @@ module top(
 	output wire t_uart_wr,
 	output wire t_uart_rd,
 
-	output wire t_gpio_a13
+	output wire t_gpio_a13,
+	output wire t_gpio_h4
 );
 
 	wire clk = t_clk;
@@ -51,8 +52,9 @@ module top(
 	wire [7:0] uart_di;
 	wire uart_wr;
 	wire uart_rd;
+	wire uart_oe;
 
-    assign t_uart_data 	= uart_wr ? uart_do : 8'bz;
+    assign t_uart_data 	= uart_oe ? uart_do : 8'bz;
 	assign uart_di 		= t_uart_data;
 	assign t_uart_wr 	= ~uart_wr;
 	assign t_uart_rd 	= ~uart_rd;
@@ -67,7 +69,9 @@ module top(
 		.io_uart_rxf(srxf),
 		.io_uart_wr(uart_wr),
 		.io_uart_rd(uart_rd),
-		.io_gpio_a13(t_gpio_a13)
+		.io_uart_oe(uart_oe),
+		.io_gpio_a13(t_gpio_a13),
+		.io_gpio_h4(t_gpio_h4)
    );
 
 

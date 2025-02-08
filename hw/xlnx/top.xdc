@@ -4,7 +4,7 @@ set_property CONFIG_VOLTAGE 3.3 [current_design]
 
 set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN F4 } [get_ports {t_clk}]
 create_clock -name t_clk -period 10.0 [get_ports {t_clk}]
-set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN A14 PULLUP TRUE } [get_ports {t_rst}]
+set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN A14  PULLUP TRUE } [get_ports {t_rst}]
 
 
 set_property IOSTANDARD LVCMOS33 [get_ports {t_uart_data[*]}]
@@ -23,13 +23,13 @@ set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN M13 } [get_ports {t_uart_w
 set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN D9 } [get_ports {t_uart_rd}]
 
 
-set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN A13  LOC IOB_X0Y131  SLEW FAST } [get_ports {t_gpio_a13}]
-
+set_property -dict { IOSTANDARD LVCMOS33  LOC A13  SLEW FAST } [get_ports {t_gpio_a13}]
+set_property -dict { IOSTANDARD LVCMOS33  LOC H4  SLEW FAST } [get_ports {t_gpio_h4}]
 
 
 
 set_property BITSTREAM.GENERAL.COMPRESS FALSE [current_design]
 set_property BITSTREAM.CONFIG.CONFIGRATE 12 [current_design]
-set_property BITSTREAM.CONFIG.SPI_32BIT_ADDR hNo [current_design]
+set_property BITSTREAM.CONFIG.SPI_32BIT_ADDR NO [current_design]
 set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
 set_property BITSTREAM.CONFIG.SPI_FALL_EDGE YES [current_design]

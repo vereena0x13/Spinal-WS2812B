@@ -24,14 +24,29 @@ place_design
 route_design
 
 
-report_timing_summary -file $rptDir/post_route_tim.rpt
-report_utilization -hierarchical -file $rptDir/post_route_util.rpt
-report_route_status -file $rptDir/post_route_status.rpt
-report_io -file $rptDir/post_route_io.rpt
-report_power -file $rptDir/post_route_power.rpt
-report_design_analysis -logic_level_distribution \
-    -of_timing_paths [get_timing_paths -max_paths 10000 \
-    -slack_lesser_than 0] \
+report_timing_summary                                       \
+    -file $rptDir/post_route_timing_summary.rpt
+report_timing                                               \
+    -file $rptDir/post_route_timing.rpt
+
+report_utilization                                          \
+    -hierarchical                                           \
+    -hierarchical_percentages                               \
+    -file $rptDir/post_route_util.rpt
+
+report_route_status                                         \
+    -file $rptDir/post_route_status.rpt
+
+report_io                                                   \
+    -file $rptDir/post_route_io.rpt
+
+report_power                                                \
+    -file $rptDir/post_route_power.rpt
+
+report_design_analysis                                      \
+    -logic_level_distribution                               \
+    -of_timing_paths [get_timing_paths -max_paths 10000     \
+    -slack_lesser_than 0]                                   \
     -file $rptDir/post_route_vios.rpt
 
 

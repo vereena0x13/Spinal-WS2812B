@@ -27,8 +27,9 @@ case class UartHandler(cfg: LedMatrixConfig) extends Component {
 
 
     uart.rd.setAsReg() init(False)
-    uart.wr                     := False
     uart.wdata                  := 0
+    uart.wr                     := False
+    uart.oe                     := False
 
     mem_waddr.setAsReg() init(0)
     mem_wdata.setAsReg() init(0)

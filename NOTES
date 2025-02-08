@@ -1,0 +1,9 @@
+  - the logic relating to "led strips" and "[tiled] led matrices"
+    from the logic responsible for generating the WS2812B signal
+    furthermore, the logic for looking up individual pixel component
+    bytes in memory should also be decoupled
+  - "frame interpolation" for the scrolling on the led strip
+    - really we have no need to do this in hardware; for now we'll do
+      it when generating the ROM for the strip
+      but later, it might be kinda neat/fun to try
+      implementing it in hardware?
