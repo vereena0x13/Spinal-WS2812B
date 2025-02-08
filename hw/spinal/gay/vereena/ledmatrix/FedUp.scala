@@ -21,9 +21,6 @@ object FedUp {
     }
 
     private def createStripROM(size: Int) = {
-        //Pride.transFlag.foreach(println)
-        Pride.transFlag.grouped(3).foreach(println)
-
         val xs = Pride.prideSeq.flatten
         val init = Seq.tabulate(size)(x => xs(x % xs.size))
         Mem(UInt(8 bits), init)

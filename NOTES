@@ -7,3 +7,4 @@
       it when generating the ROM for the strip
       but later, it might be kinda neat/fun to try
       implementing it in hardware?
+  - fix the edge case where the same flag is displayed twice in a row

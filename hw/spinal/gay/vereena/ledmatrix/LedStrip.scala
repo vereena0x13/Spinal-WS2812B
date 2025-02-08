@@ -56,8 +56,8 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
 
 
     // NOTE TODO: this "offset" thing doesn't belong in LedStrip; refactoring needed! :(
-    val offset                  = Reg(atype()) init(pixels - 1)
-    val offsetClkDiv            = CounterFreeRun(15_000_000) // 10_000_000 * 10ns = 0.1s
+    val offset                  = Reg(atype()) init(0)
+    val offsetClkDiv            = CounterFreeRun(10_000_000) // 10_000_000 * 10ns = 0.1s
     when(offsetClkDiv.willOverflow) {
         when(offset === 0) {
             offset              := pixels - 1

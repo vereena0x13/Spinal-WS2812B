@@ -21,7 +21,7 @@ synth:
 	rm -f $(REPORT_LAST_DIR)/*.txt
 	find $(REPORT_DIR) -type f -exec mv {} $(REPORT_LAST_DIR) \;
 	vivado -mode batch -log $(NAME).log -nojournal -source $(NAME).tcl
-	mv clockInfo.txt $(REPORT_DIR)
+	mv *.txt $(REPORT_DIR)
 
 
 program:
