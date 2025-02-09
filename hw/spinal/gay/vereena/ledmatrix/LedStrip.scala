@@ -53,19 +53,27 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
     val pbyte                   = Reg(UInt(2 bits)) init(0)
     val pbit                    = Reg(UInt(3 bits)) init(0)
     val curByte                 = Reg(UInt(8 bits))
-
+ 
 
     // NOTE TODO: this "offset" thing doesn't belong in LedStrip; refactoring needed! :(
     val offset                  = Reg(atype()) init(0)
-    val offsetClkDiv            = CounterFreeRun(10_000_000) // 10_000_000 * 10ns = 0.1s
-    when(offsetClkDiv.willOverflow) {
+    val offsetClkDiv            = Counter(10_000_000) // 10_000_000 * 10ns = 0.1s
+    val decOffset               = Reg(Bool()) init(False)
+    val offsetMayDec            = Bool()
+    when(decOffset && offsetMayDec) {
+        decOffset               := False
         when(offset === 0) {
             offset              := pixels - 1
         } otherwise {
             offset              := offset - 1
         }
+    } elsewhen(!decOffset) {
+        offsetClkDiv.increment()
+        when(offsetClkDiv.willOverflow) {
+            decOffset           := True
+        }
     }
-    
+
 
     // NOTE TODO: what should be the source of pixel data? what if
     //            someone bits to generate pixels on the fly w/o mem, etc.?
@@ -77,7 +85,6 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
                                     2 -> U(2, 2 bits)
                                 )
     
-    //val pidx                    = (pixel + offset) % pixels
     val pidx                    = UInt(log2Up(pixels) bits)
     val poff                    = pixel + offset
     when(poff < pixels) {
@@ -115,5 +122,8 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
             val t = Mux(bit, U(T1H), U(T0H))
             when(timer === t) { dout := False }
         }
+
+
+        offsetMayDec            := isEntering(outputRst)
     }
 }

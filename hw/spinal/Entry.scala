@@ -78,6 +78,8 @@ object SimulateSOC extends App {
                 val dout    = soc.matrix.ledMatrix.io.dout
                 var did     = false
                 for(i <- 0 until n) {
+                    if(i % 10_000 == 0) println(i)
+
                     clk.clockToggle()
                     sleep(1)
                     clk.clockToggle()
@@ -93,7 +95,7 @@ object SimulateSOC extends App {
             }
 
             val matrix  = soc.matrix
-            val N       = 1000 * 50
+            val N       = 1000 * 1000
             var col     = 0
             runCycles(N, _ => ())
 
