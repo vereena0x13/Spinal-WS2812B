@@ -1,3 +1,4 @@
+import gay.vereena.ledmatrix.misc.Debouncer
 import java.io._
 
 import scala.collection.mutable.ArrayBuffer
@@ -9,7 +10,9 @@ import spinal.core._
 import spinal.core.sim._
 
 import gay.vereena.ledmatrix._
-import gay.vereena.ledmatrix.Util._
+import gay.vereena.ledmatrix.misc._
+import gay.vereena.ledmatrix.util._
+import gay.vereena.ledmatrix.util.Util._
 
 
 
@@ -41,7 +44,7 @@ object SimulateSOC extends App {
             soc.io.uart.rdata.simPublic()
             soc.io.uart.txe.simPublic()
             soc.io.uart.rxf.simPublic()
-            soc.io.gpio_a13.simPublic()
+            soc.io.gpio_strip_dout.simPublic()
             soc.matrix.ram.simPublic()
             soc.matrix.ledMatrix.io.simPublic()
             soc.matrix.ledMatrix.io.dout.simPublic()

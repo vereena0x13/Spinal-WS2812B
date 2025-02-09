@@ -1,4 +1,4 @@
-package gay.vereena.ledmatrix
+package gay.vereena.ledmatrix.util
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.Iterator

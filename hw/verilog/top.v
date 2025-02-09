@@ -1,18 +1,23 @@
 module top(
-	input wire t_clk,
-	input wire t_rst,
+	input wire 			t_clk,
+	input wire 			t_rst,
 
-	inout wire [7:0] t_uart_data,
-	input wire t_uart_txe,
-	input wire t_uart_rxf,
-	output wire t_uart_wr,
-	output wire t_uart_rd,
+	inout wire [7:0]	t_uart_data,
+	input wire 			t_uart_txe,
+	input wire 			t_uart_rxf,
+	output wire 		t_uart_wr,
+	output wire 		t_uart_rd,
 
-	output wire t_gpio_a13,
-	output wire t_gpio_h4,
-	input wire t_gpio_v12,
-	input wire t_gpio_r11,
-	input wire t_gpio_u13
+	output wire 		t_gpio_strip_dout,
+	output wire 		t_gpio_matrix_dout,
+
+	input wire 			t_gpio_enc_key,
+	input wire 			t_gpio_enc_b,
+	input wire 			t_gpio_enc_a,
+
+	output wire [3:0]	t_gpio_til311_data,
+	output wire 		t_gpio_til311_strobe,
+	output wire 		t_gpio_til311_blank
 );
 
 	wire clk = t_clk;
@@ -66,6 +71,7 @@ module top(
     FedUp soc(
         .clk(clk),
         .reset(rst),
+
         .io_uart_rdata(uart_di),
 		.io_uart_wdata(uart_do),
 		.io_uart_txe(stxe),
@@ -73,11 +79,17 @@ module top(
 		.io_uart_wr(uart_wr),
 		.io_uart_rd(uart_rd),
 		.io_uart_oe(uart_oe),
-		.io_gpio_a13(t_gpio_a13),
-		.io_gpio_h4(t_gpio_h4),
-		.io_gpio_v12(t_gpio_v12),
-		.io_gpio_r11(t_gpio_r11),
-		.io_gpio_u13(t_gpio_u13)
+
+		.io_gpio_strip_dout(t_gpio_strip_dout),
+		.io_gpio_matrix_dout(t_gpio_matrix_dout),
+
+		.io_gpio_enc_key(t_gpio_enc_key),
+		.io_gpio_enc_b(t_gpio_enc_b),
+		.io_gpio_enc_a(t_gpio_enc_a),
+
+		.io_gpio_til311_data(t_gpio_til311_data)
+		.io_gpio_til311_strobe(t_gpio_til311_strobe)
+		.io_gpio_til311_blank(t_gpio_til311_blank)
    );
 
 

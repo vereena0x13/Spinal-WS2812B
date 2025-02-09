@@ -4,7 +4,7 @@ import spinal.lib._
 import spinal.core._
 import spinal.core.sim._
 
-import Util._
+import gay.vereena.ledmatrix.misc._
 
 
 
@@ -23,6 +23,7 @@ object FedUp {
     private def createStripROM(size: Int) = {
         val xs = Pride.prideSeq.flatten
         val init = Seq.tabulate(size)(x => xs(x % xs.size))
+        xs.grouped(3).foreach(println)
         Mem(UInt(8 bits), init)
     }
 }
@@ -34,11 +35,16 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
     val io = new Bundle {
         val uart                    = UartBus()
         
-        val gpio_a13                = out Bool()    // led strip dout
-        val gpio_h4                 = out Bool()    // led matrix dout
-        val gpio_v12                = in Bool()     // enc_key
-        val gpio_r11                = in Bool()     // enc_b
-        val gpio_u13                = in Bool()     // enc_a
+        val gpio_strip_dout         = out Bool()
+        val gpio_matrix_dout        = out Bool()
+        
+        val gpio_enc_key            = in Bool()
+        val gpio_enc_b              = in Bool()
+        val gpio_enc_a              = in Bool()
+        
+        val gpio_til311_data        = out UInt(4 bits)
+        val gpio_til311_strobe      = out Bool()
+        val gpio_til311_blank       = out Bool()
     }
     import io._
 
@@ -47,8 +53,8 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
 
     val brightness = new Area {
         val encoder                 = RotaryEncoder()
-        encoder.io.enc_a            := gpio_u13
-        encoder.io.enc_b            := gpio_r11
+        encoder.io.enc_a            := gpio_enc_a
+        encoder.io.enc_b            := gpio_enc_b
 
         val value                   = Reg(UInt(4 bits)) init(7)
 
@@ -102,7 +108,7 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
 
 
         val ledMatrix               = LedMatrix(cfg)
-        gpio_h4                     := ledMatrix.io.dout
+        gpio_matrix_dout                     := ledMatrix.io.dout
         ram_raddr                   := ledMatrix.io.mem_raddr
         ram_read                    := ledMatrix.io.mem_read
         ledMatrix.io.mem_rdata      := ram_rdata
@@ -142,7 +148,7 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         */
 
         val ledStrip                = LedStrip(stripCfg)
-        gpio_a13                    := ledStrip.io.dout
+        gpio_strip_dout             := ledStrip.io.dout
         rom_raddr                   := ledStrip.io.mem_raddr
         rom_read                    := ledStrip.io.mem_read
         ledStrip.io.mem_rdata       := rom_rdata

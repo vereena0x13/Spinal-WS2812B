@@ -1,4 +1,4 @@
-package gay.vereena.ledmatrix
+package gay.vereena.ledmatrix.util
 
 import spinal.core._
 import spinal.lib.fsm._

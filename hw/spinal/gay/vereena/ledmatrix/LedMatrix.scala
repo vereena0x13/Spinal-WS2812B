@@ -7,7 +7,8 @@ import spinal.core.sim._
 import spinal.lib._
 import spinal.lib.fsm._
 
-import FSMExtensions._
+import gay.vereena.ledmatrix.util.FSMExtensions._
+
 
 
 case class LedMatrixConfig(

@@ -4,7 +4,8 @@ import spinal.core._
 import spinal.lib._
 import spinal.lib.fsm._
 
-import FSMExtensions._
+import gay.vereena.ledmatrix.misc._
+import gay.vereena.ledmatrix.util.FSMExtensions._
 
 
 // TODO: eventually we'd like this to be far more general;

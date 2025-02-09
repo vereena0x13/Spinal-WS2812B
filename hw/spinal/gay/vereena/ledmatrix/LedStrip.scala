@@ -7,7 +7,7 @@ import spinal.core.sim._
 import spinal.lib._
 import spinal.lib.fsm._
 
-import FSMExtensions._
+import gay.vereena.ledmatrix.util.FSMExtensions._
 
 
 case class LedStripConfig(
@@ -89,13 +89,8 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
                                     2 -> U(2, 2 bits)
                                 )
     
-    val pidx                    = UInt(log2Up(pixels) bits)
     val poff                    = pixel + offset
-    when(poff < pixels) {
-        pidx                    := poff.resized
-    } otherwise {
-        pidx                    := (poff - pixels).resized
-    }
+    val pidx                    = Mux(poff < pixels, poff, (poff - pixels)).resize(log2Up(pixels) bits)
 
     val paddr                   = pbytem + pidx * bytes_per_pixel
     mem_raddr                   := paddr((addr_width - 1) downto 0)
