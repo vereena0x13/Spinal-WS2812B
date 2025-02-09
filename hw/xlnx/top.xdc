@@ -34,9 +34,9 @@ set_property -dict { IOSTANDARD LVCMOS33  LOC H4  SLEW FAST } [get_ports {t_gpio
 
 
 # Rotary Encoder
-set_property -dict { IOSTANDARD LVCMOS33  LOC G3  SLEW FAST } [get_ports {t_gpio_enc_key}]
-set_property -dict { IOSTANDARD LVCMOS33  LOC G2  SLEW FAST } [get_ports {t_gpio_enc_b}]
-set_property -dict { IOSTANDARD LVCMOS33  LOC B4  SLEW FAST } [get_ports {t_gpio_enc_a}]
+set_property -dict { IOSTANDARD LVCMOS33  LOC G3 } [get_ports {t_gpio_enc_key}]
+set_property -dict { IOSTANDARD LVCMOS33  LOC G2 } [get_ports {t_gpio_enc_b}]
+set_property -dict { IOSTANDARD LVCMOS33  LOC B4 } [get_ports {t_gpio_enc_a}]
 
 
 # TIL311

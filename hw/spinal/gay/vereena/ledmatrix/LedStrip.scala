@@ -54,7 +54,6 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
     val pixel                   = Reg(UInt(log2Up(pixels) bits)) init(0)
     val pbyte                   = Reg(UInt(2 bits)) init(0)
     val pbit                    = Reg(UInt(3 bits)) init(0)
-    val curByte                 = Reg(UInt(8 bits))
  
     val isResetting             = Bool()
     val curBrightness           = RegNextWhen(brightness, isResetting)
@@ -95,8 +94,12 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
     val paddr                   = pbytem + pidx * bytes_per_pixel
     mem_raddr                   := paddr((addr_width - 1) downto 0)
 
+    val curByte                 = Reg(UInt(8 bits))
     val bit                     = curByte(7 - pbit)
     
+
+    val gammaRom                = WS2812B.createGammaROM()
+
 
     val fsm                     = new StateMachine {
         val readNextByte        = new State
@@ -109,7 +112,7 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
         val tileRowComplete     = new State
         val outputRst           = new State with EntryPoint
  
-        readNextByte.counting(      timer,  1,              outputBitShape                      ).onExit(curByte := (mem_rdata * curBrightness).resized)
+        readNextByte.counting(      timer,  1,              outputBitShape                      ).onExit(curByte := gammaRom((mem_rdata * curBrightness).resized))
         outputBitShape.counting(    timer,  TBIT,           bitComplete                         ).onEntry(dout := True)
         bitComplete.counting(       pbit,   7,              byteComplete,       readNextByte    )
         byteComplete.counting(      pbyte,  2,              pixelComplete,      readNextByte    )

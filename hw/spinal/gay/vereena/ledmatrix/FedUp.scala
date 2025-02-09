@@ -23,7 +23,6 @@ object FedUp {
     private def createStripROM(size: Int) = {
         val xs = Pride.prideSeq.flatten
         val init = Seq.tabulate(size)(x => xs(x % xs.size))
-        xs.grouped(3).foreach(println)
         Mem(UInt(8 bits), init)
     }
 }
@@ -56,20 +55,28 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         encoder.io.enc_a            := gpio_enc_a
         encoder.io.enc_b            := gpio_enc_b
 
-        val value                   = Reg(UInt(4 bits)) init(7)
+        val keyDebouncer            = Debouncer(true)
+        keyDebouncer.io.din         := gpio_enc_key
 
-        when(encoder.io.count_cw) {
-            value                   := value +| 1
-        } elsewhen(encoder.io.count_ccw) {
-            value                   := value -| 1
+        val stripEnabled            = Reg(Bool()) init(True)
+        when(keyDebouncer.io.dout.fall()) {
+            stripEnabled            := ~stripEnabled
         }
 
+        val valueCnt                = Reg(UInt(4 bits)) init(7)
+        when(encoder.io.count_cw) {
+            valueCnt                := valueCnt +| 1
+        } elsewhen(encoder.io.count_ccw) {
+            valueCnt                := valueCnt -| 1
+        }
+
+        val value                   = Mux(stripEnabled, valueCnt, U(0))
 
         val til311                  = TIL311()
         til311.io.value             := value
         gpio_til311_data            := til311.io.data
         gpio_til311_strobe          := til311.io.strobe
-        gpio_til311_blank           := til311.io.blank
+        gpio_til311_blank           := Mux(stripEnabled, til311.io.blank, True)
     }
 
 
@@ -115,7 +122,7 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
 
 
         val ledMatrix               = LedMatrix(cfg)
-        gpio_matrix_dout                     := ledMatrix.io.dout
+        gpio_matrix_dout            := ledMatrix.io.dout
         ram_raddr                   := ledMatrix.io.mem_raddr
         ram_read                    := ledMatrix.io.mem_read
         ledMatrix.io.mem_rdata      := ram_rdata
@@ -141,18 +148,6 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
             enable                  = rom_read
         )
         
-        /*
-        TODO: this code belongs here rather than in LedStrip, obviously, but
-              having LedStrip be responsible for addressing the individual bytes
-              within each pixel makes it annoying to put it here, so, until I
-              refactor things and get shit decoupled, it's there instead.
-
-        val offset                  = Reg(stripCfg.atype())
-        val offsetClkDiv            = CounterFreeRun(10_000_000) // 10_000_000 * 10ns = 0.1s
-        when(offsetClkDiv.willOverflow) {
-            offset                  := offset + 1
-        }
-        */
 
         val ledStrip                = LedStrip(stripCfg)
         gpio_strip_dout             := ledStrip.io.dout

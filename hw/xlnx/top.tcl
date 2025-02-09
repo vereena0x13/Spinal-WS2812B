@@ -24,10 +24,17 @@ place_design
 route_design
 
 
+report_methodology                                          \
+    -file $rptDir/methodology.rpt
+
 report_timing_summary                                       \
     -file $rptDir/timing_summary.rpt
+
 report_timing                                               \
     -file $rptDir/timing.rpt
+
+report_clock_utilization                                    \
+    -file $rptDir/clock_utilization.rpt
 
 report_utilization                                          \
     -hierarchical                                           \
@@ -43,11 +50,8 @@ report_io                                                   \
 report_power                                                \
     -file $rptDir/power.rpt
 
-report_design_analysis                                      \
-    -logic_level_distribution                               \
-    -of_timing_paths [get_timing_paths -max_paths 10000     \
-    -slack_lesser_than 0]                                   \
-    -file $rptDir/vios.rpt
+report_drc                                                  \
+    -file $rptDir/drc.rpt
 
 
 

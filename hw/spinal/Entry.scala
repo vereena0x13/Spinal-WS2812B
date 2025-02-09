@@ -13,6 +13,7 @@ import gay.vereena.ledmatrix._
 import gay.vereena.ledmatrix.misc._
 import gay.vereena.ledmatrix.util._
 import gay.vereena.ledmatrix.util.Util._
+import gay.vereena.ledmatrix.util.SimExtensions._
 
 
 
@@ -41,10 +42,17 @@ object SimulateSOC extends App {
             
             val soc = FedUp(Some(ramData))
             
+            soc.io.uart.wdata.simPublic()
             soc.io.uart.rdata.simPublic()
             soc.io.uart.txe.simPublic()
             soc.io.uart.rxf.simPublic()
+            soc.io.uart.wr.simPublic()
+            soc.io.uart.rd.simPublic()
+            soc.io.uart.oe.simPublic()
+
+            soc.io.gpio_matrix_dout.simPublic()
             soc.io.gpio_strip_dout.simPublic()
+            
             soc.matrix.ram.simPublic()
             soc.matrix.ledMatrix.io.simPublic()
             soc.matrix.ledMatrix.io.dout.simPublic()
@@ -54,91 +62,28 @@ object SimulateSOC extends App {
             soc.matrix.ledMatrix.pbyte.simPublic()
             soc.matrix.ledMatrix.pbit.simPublic()
             
+            soc.strip.ledStrip.timer.simPublic()
+            soc.strip.ledStrip.pbyte.simPublic()
+            soc.strip.ledStrip.pbit.simPublic()
 
             soc
         }
         .doSim { soc =>
+            val clk = soc.clockDomain.get
+            
+            val matrix = soc.matrix
+            val strip = soc.strip
+
+
             soc.io.uart.rdata #= 0
             soc.io.uart.txe   #= false
             soc.io.uart.rxf   #= true
-            
-            val clk = soc.clockDomain
-
-            clk.fallingEdge()
-            sleep(0)
-
-            clk.assertReset()
-            for(_ <- 0 until 10) {
-                clk.clockToggle()
-                sleep(1)
-            }
-            clk.deassertReset()
-            sleep(1)
-
-
-            def runCycles(n: Int, onDout: (Boolean) => Unit): Unit = {
-                val timer   = soc.matrix.ledMatrix.timer
-                val dout    = soc.matrix.ledMatrix.io.dout
-                var did     = false
-                for(i <- 0 until n) {
-                    if(i % 10_000 == 0) println(i)
-
-                    clk.clockToggle()
-                    sleep(1)
-                    clk.clockToggle()
-                    sleep(1)
-
-                    if(!did && timer.toLong == 45) {
-                        did = true
-                        onDout(dout.toBoolean)                        
-                    } else if(did && timer.toLong == 124) {
-                        did = false
-                    }
-                }
-            }
-
-            val matrix  = soc.matrix
-            val N       = 1000 * 1000
-            var col     = 0
-            runCycles(N, _ => ())
 
             
-            /*          
-            val w = new PrintWriter(new FileWriter("dout_expected.txt"))
-            runCycles(N, v => {
-                w.write(if(v) '1' else '0')
-                col += 1
-                if(col == 16) {
-                    col = 0
-                    w.write('\n')
-                }
-            })
-            w.close()
-            */
+            clk.doResetCycles()
 
-            /*
-            val r       = new BufferedReader(new FileReader("dout_expected.txt"))
-            runCycles(N, v => {
-                val w = if(v) '1' else '0'
-                val ex = r.read().toChar
-                assert(w == ex, {
-                    Seq(
-                        "",
-                        s"expected ${ex}, got ${w}",
-                        s"px: ${matrix.px.toLong}",
-                        s"py: ${matrix.py.toLong}",
-                        s"pbyte: ${matrix.pbyte.toLong}",
-                        s"pbit: ${matrix.pbit.toLong}"
-                    ).map(_ + '\n').reduce(_+_)
-                })
-                col += 1
-                if(col == 16) {
-                    col = 0
-                    r.read()
-                }
-            })
-            r.close()
-            */
+
+            clk.tick(1000 * 100)
         }
 }
 

@@ -15,7 +15,7 @@ case class TIL311() extends Component {
     import io._
 
 
-    val valuePrev           = RegNext(value)
+    val valuePrev           = RegNext(value) init(0) // NOTE TODO: this doesn't handle reset right?
 
     data                    := value
     strobe                  := value =/= valuePrev
