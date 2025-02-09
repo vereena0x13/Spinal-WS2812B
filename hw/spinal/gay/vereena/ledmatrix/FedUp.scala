@@ -63,6 +63,13 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         } elsewhen(encoder.io.count_ccw) {
             value                   := value -| 1
         }
+
+
+        val til311                  = TIL311()
+        til311.io.value             := value
+        gpio_til311_data            := til311.io.data
+        gpio_til311_strobe          := til311.io.strobe
+        gpio_til311_blank           := til311.io.blank
     }
 
 

@@ -87,8 +87,8 @@ module top(
 		.io_gpio_enc_b(t_gpio_enc_b),
 		.io_gpio_enc_a(t_gpio_enc_a),
 
-		.io_gpio_til311_data(t_gpio_til311_data)
-		.io_gpio_til311_strobe(t_gpio_til311_strobe)
+		.io_gpio_til311_data(t_gpio_til311_data),
+		.io_gpio_til311_strobe(t_gpio_til311_strobe),
 		.io_gpio_til311_blank(t_gpio_til311_blank)
    );
 

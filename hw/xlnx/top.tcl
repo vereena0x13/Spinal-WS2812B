@@ -25,29 +25,29 @@ route_design
 
 
 report_timing_summary                                       \
-    -file $rptDir/post_route_timing_summary.rpt
+    -file $rptDir/timing_summary.rpt
 report_timing                                               \
-    -file $rptDir/post_route_timing.rpt
+    -file $rptDir/timing.rpt
 
 report_utilization                                          \
     -hierarchical                                           \
     -hierarchical_percentages                               \
-    -file $rptDir/post_route_util.rpt
+    -file $rptDir/utilization.rpt
 
 report_route_status                                         \
-    -file $rptDir/post_route_status.rpt
+    -file $rptDir/route_status.rpt
 
 report_io                                                   \
-    -file $rptDir/post_route_io.rpt
+    -file $rptDir/io.rpt
 
 report_power                                                \
-    -file $rptDir/post_route_power.rpt
+    -file $rptDir/power.rpt
 
 report_design_analysis                                      \
     -logic_level_distribution                               \
     -of_timing_paths [get_timing_paths -max_paths 10000     \
     -slack_lesser_than 0]                                   \
-    -file $rptDir/post_route_vios.rpt
+    -file $rptDir/vios.rpt
 
 
 

@@ -19,5 +19,5 @@ case class TIL311() extends Component {
 
     data                    := value
     strobe                  := value =/= valuePrev
-    blank                   := False //
+    blank                   := False
 }

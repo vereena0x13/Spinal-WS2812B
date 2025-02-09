@@ -44,7 +44,7 @@ set_property -dict { IOSTANDARD LVCMOS33  SLEW FAST } [get_ports {t_gpio_til311_
 set_property LOC A11 [get_ports {t_gpio_til311_data[3]}]
 set_property LOC B14 [get_ports {t_gpio_til311_data[2]}]
 set_property LOC A9 [get_ports {t_gpio_til311_data[1]}]
-set_property LOC A8 [get_ports {t_gpio_til311_data[70]}]
+set_property LOC A8 [get_ports {t_gpio_til311_data[0]}]
 set_property -dict { IOSTANDARD LVCMOS33  LOC B9  SLEW FAST } [get_ports {t_gpio_til311_strobe}]
 set_property -dict { IOSTANDARD LVCMOS33  LOC C5  SLEW FAST } [get_ports {t_gpio_til311_blank}]
 
