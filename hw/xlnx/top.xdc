@@ -25,6 +25,9 @@ set_property -dict { IOSTANDARD LVCMOS33  PACKAGE_PIN D9 } [get_ports {t_uart_rd
 
 set_property -dict { IOSTANDARD LVCMOS33  LOC A13  SLEW FAST } [get_ports {t_gpio_a13}]
 set_property -dict { IOSTANDARD LVCMOS33  LOC H4  SLEW FAST } [get_ports {t_gpio_h4}]
+set_property -dict { IOSTANDARD LVCMOS33  LOC V12  SLEW FAST } [get_ports {t_gpio_v12}]
+set_property -dict { IOSTANDARD LVCMOS33  LOC R11  SLEW FAST } [get_ports {t_gpio_r11}]
+set_property -dict { IOSTANDARD LVCMOS33  LOC U13  SLEW FAST } [get_ports {t_gpio_u13}]
 
 
 

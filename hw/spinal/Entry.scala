@@ -204,3 +204,58 @@ object SimulateUartHandler extends App {
             tick(30)
         }
 }
+
+
+object SimulateDebouncer extends App {
+    SimConfig
+        .withFstWave
+        .withConfig(spinalConfig())
+        .compile {
+            val dut = Debouncer(false, 4)
+
+            dut.io.din.simPublic()
+            dut.io.dout.simPublic()
+
+            dut
+        }
+        .doSim { dut =>
+            val clk = dut.clockDomain
+
+            def tickOnce(): Unit = {
+                clk.clockToggle()
+                sleep(1)
+                clk.clockToggle()
+                sleep(1)
+            }
+
+            def tick(n: Int): Unit = { for(_ <- 0 until n) { tickOnce() } }
+
+
+            import dut.io._
+            
+            din #= false
+            tick(6)
+
+
+            din #= true
+            tick(5)
+            
+            din #= false
+            tick(3)
+            din #= true
+            tick(5)
+
+
+            din #= false
+            tick(5)
+
+
+            din #= true
+            tick(3)
+            din #= false
+            tick(12)
+
+            din #= true
+            tick(12)
+        }
+}

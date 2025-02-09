@@ -9,7 +9,10 @@ module top(
 	output wire t_uart_rd,
 
 	output wire t_gpio_a13,
-	output wire t_gpio_h4
+	output wire t_gpio_h4,
+	input wire t_gpio_v12,
+	input wire t_gpio_r11,
+	input wire t_gpio_u13
 );
 
 	wire clk = t_clk;
@@ -71,7 +74,10 @@ module top(
 		.io_uart_rd(uart_rd),
 		.io_uart_oe(uart_oe),
 		.io_gpio_a13(t_gpio_a13),
-		.io_gpio_h4(t_gpio_h4)
+		.io_gpio_h4(t_gpio_h4),
+		.io_gpio_v12(t_gpio_v12),
+		.io_gpio_r11(t_gpio_r11),
+		.io_gpio_u13(t_gpio_u13)
    );
 
 

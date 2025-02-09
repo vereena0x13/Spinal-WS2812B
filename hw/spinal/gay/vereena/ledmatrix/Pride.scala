@@ -25,14 +25,14 @@ object Pride {
         255
     )
 
-    private val BRIGHTNESS          = 140
+    private val MAX_BRIGHTNESS      = 140
     private val FLAG_COLOR_WIDTH    = 16
 
     
     private def fixupColor(x: Int): Int = {
         val xd = x.toDouble / 255.0d
-        val y = (xd * BRIGHTNESS).toInt
-        GAMMA(y)
+        val y = (xd * MAX_BRIGHTNESS).toInt
+        GAMMA(y) >> 4
     }
 
     private def hexColor(c: Int) = Seq(

@@ -34,10 +34,31 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
     val io = new Bundle {
         val uart                    = UartBus()
         
-        val gpio_a13                = out(Bool())
-        val gpio_h4                 = out(Bool())
+        val gpio_a13                = out Bool()    // led strip dout
+        val gpio_h4                 = out Bool()    // led matrix dout
+        val gpio_v12                = in Bool()     // enc_key
+        val gpio_r11                = in Bool()     // enc_b
+        val gpio_u13                = in Bool()     // enc_a
     }
     import io._
+
+
+
+
+    val brightness = new Area {
+        val encoder                 = RotaryEncoder()
+        encoder.io.enc_a            := gpio_u13
+        encoder.io.enc_b            := gpio_r11
+
+        val value                   = Reg(UInt(4 bits)) init(7)
+
+        when(encoder.io.count_cw) {
+            value                   := value +| 1
+        } elsewhen(encoder.io.count_ccw) {
+            value                   := value -| 1
+        }
+    }
+
 
 
 
@@ -120,10 +141,11 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         }
         */
 
-        val strip                   = LedStrip(stripCfg)
-        gpio_a13                    := strip.io.dout
-        rom_raddr                   := strip.io.mem_raddr
-        rom_read                    := strip.io.mem_read
-        strip.io.mem_rdata          := rom_rdata
+        val ledStrip                = LedStrip(stripCfg)
+        gpio_a13                    := ledStrip.io.dout
+        rom_raddr                   := ledStrip.io.mem_raddr
+        rom_read                    := ledStrip.io.mem_read
+        ledStrip.io.mem_rdata       := rom_rdata
+        ledStrip.io.brightness      := brightness.value
     }
 }

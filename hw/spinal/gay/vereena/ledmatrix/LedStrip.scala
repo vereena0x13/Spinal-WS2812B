@@ -41,6 +41,8 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
         val mem_raddr           = out(atype())
         val mem_read            = out(Bool())
         val mem_rdata           = in(UInt(8 bits))
+
+        val brightness          = in(UInt(4 bits))
     }
     import io._
 
@@ -54,13 +56,15 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
     val pbit                    = Reg(UInt(3 bits)) init(0)
     val curByte                 = Reg(UInt(8 bits))
  
+    val isResetting             = Bool()
+    val curBrightness           = RegNextWhen(brightness, isResetting)
+
 
     // NOTE TODO: this "offset" thing doesn't belong in LedStrip; refactoring needed! :(
     val offset                  = Reg(atype()) init(0)
     val offsetClkDiv            = Counter(10_000_000) // 10_000_000 * 10ns = 0.1s
     val decOffset               = Reg(Bool()) init(False)
-    val offsetMayDec            = Bool()
-    when(decOffset && offsetMayDec) {
+    when(decOffset && isResetting) {
         decOffset               := False
         when(offset === 0) {
             offset              := pixels - 1
@@ -95,13 +99,12 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
 
     val paddr                   = pbytem + pidx * bytes_per_pixel
     mem_raddr                   := paddr((addr_width - 1) downto 0)
-    mem_read                    := False
 
     val bit                     = curByte(7 - pbit)
     
 
     val fsm                     = new StateMachine {
-        val readNextByte        = new State with EntryPoint
+        val readNextByte        = new State
         val outputBitShape      = new State
         val bitComplete         = new State
         val byteComplete        = new State
@@ -109,9 +112,9 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
         val rowComplete         = new State
         val tileComplete        = new State
         val tileRowComplete     = new State
-        val outputRst           = new State
+        val outputRst           = new State with EntryPoint
  
-        readNextByte.counting(      timer,  1,              outputBitShape                      ).whenIsActive(mem_read := True).onExit(curByte := mem_rdata)
+        readNextByte.counting(      timer,  1,              outputBitShape                      ).onExit(curByte := (mem_rdata * curBrightness).resized)
         outputBitShape.counting(    timer,  TBIT,           bitComplete                         ).onEntry(dout := True)
         bitComplete.counting(       pbit,   7,              byteComplete,       readNextByte    )
         byteComplete.counting(      pbyte,  2,              pixelComplete,      readNextByte    )
@@ -124,6 +127,7 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
         }
 
 
-        offsetMayDec            := isEntering(outputRst)
+        mem_read                := isActive(readNextByte)
+        isResetting             := isEntering(outputRst)
     }
 }

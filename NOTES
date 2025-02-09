@@ -11,3 +11,4 @@
   - use a rotary encoder to allow for adjustable brightness
   - improve the way we drive the pride flag patterns? rather than 
     ykno, just generating a big ROM...
+  - only refresh leds when their values have actually changed
