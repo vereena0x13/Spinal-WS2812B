@@ -177,11 +177,15 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         }
         
         val paddr                   = ledStrip.io.mem_raddr.resize(stripCfg.addr_width + 1)
-        val iaddr                   = paddr //+ offset
+        val iaddr                   = paddr + offset
         when(iaddr < max_addr) {
             rom_raddr               := iaddr.resized
         } otherwise {
-            rom_raddr               := (iaddr - max_addr).resized
+            when(iaddr < max_addr * 2) {
+                rom_raddr               := (iaddr - max_addr).resized
+            } otherwise {
+                rom_raddr               := (iaddr - max_addr * 2).resized
+            }
         }
     }
 }
