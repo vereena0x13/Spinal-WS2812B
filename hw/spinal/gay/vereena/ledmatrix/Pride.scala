@@ -1,7 +1,5 @@
 package gay.vereena.ledmatrix
 
-import spinal.core._
-
 
 object Pride {
     private val MAX_BRIGHTNESS      = 120
@@ -17,15 +15,15 @@ object Pride {
         fixupColor((c & 0xFF0000) >> 16),
         fixupColor((c & 0x00FF00) >> 8 ),
         fixupColor((c & 0x0000FF)      ),
-    ).map(U(_, 8 bits))
+    )
 
 
-    def flag(w: Option[Int], cs: Int*): Seq[UInt] = w match {
+    def flag(w: Option[Int], cs: Int*): Seq[Int] = w match {
         case None       => cs.reverse.map(hexColor).flatten
         case Some(i)    => cs.reverse.flatMap(c => Seq.fill(i)(hexColor(c)).flatten)
     }
 
-    def flag(cs: Int*): Seq[UInt] = flag(Some(FLAG_COLOR_WIDTH), cs: _*)
+    def flag(cs: Int*): Seq[Int] = flag(Some(FLAG_COLOR_WIDTH), cs: _*)
 
 
     val transFlag = flag(
@@ -57,5 +55,5 @@ object Pride {
         //genderfluidFlag,
         transFlag,
         lesbianFlag,
-    )
+    ).flatten
 }

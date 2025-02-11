@@ -1,9 +1,13 @@
 import gay.vereena.ledmatrix.misc.Debouncer
-import java.io._
 
-import scala.collection.mutable.ArrayBuffer
+import java.io._
+import java.nio.file.Paths
+import java.nio.file.Files
+import java.nio.charset.StandardCharsets
+
 import scala.math
 import scala.util._
+import scala.collection.mutable.ArrayBuffer
 
 import spinal.lib._
 import spinal.core._
@@ -18,10 +22,11 @@ import gay.vereena.ledmatrix.util.SimExtensions._
 
 
 object GenerateSOC extends App {
-    spinalConfig()
-        .generateVerilog(FedUp(None))
-        .printPruned()
-        .printPrunedIo()
+    val rpt = spinalConfig().generateVerilog(FedUp(None))
+
+    val sb = new StringBuilder()
+    rpt.prunedSignals.foreach(sig => sb ++= s"pruned signal: $sig\n")
+    Files.write(Paths.get("pruned.txt"), sb.toString().getBytes(StandardCharsets.UTF_8))
 }
 
 

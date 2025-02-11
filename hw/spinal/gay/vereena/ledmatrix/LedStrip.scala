@@ -43,6 +43,8 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
         val mem_rdata           = in(UInt(8 bits))
 
         val brightness          = in(UInt(4 bits))
+
+        val is_resetting        = out(Bool())
     }
     import io._
 
@@ -56,26 +58,9 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
     val pbit                    = Reg(UInt(3 bits)) init(0)
  
     val isResetting             = Bool()
+    io.is_resetting             := isResetting
+
     val curBrightness           = RegNextWhen(brightness, isResetting)
-
-
-    // NOTE TODO: this "offset" thing doesn't belong in LedStrip; refactoring needed! :(
-    val offset                  = Reg(atype()) init(0)
-    val offsetClkDiv            = Counter(10_000_000) // 10_000_000 * 10ns = 0.1s
-    val decOffset               = Reg(Bool()) init(False)
-    when(decOffset && isResetting) {
-        decOffset               := False
-        when(offset === 0) {
-            offset              := pixels - 1
-        } otherwise {
-            offset              := offset - 1
-        }
-    } elsewhen(!decOffset) {
-        offsetClkDiv.increment()
-        when(offsetClkDiv.willOverflow) {
-            decOffset           := True
-        }
-    }
 
 
     // NOTE TODO: what should be the source of pixel data? what if
@@ -88,19 +73,7 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
                                     2 -> U(2, 2 bits)
                                 )
     
-    /*
-    val poff                    = pixel + offset
-    val pidx                    = Mux(poff < pixels, poff, (poff - pixels)).resize(log2Up(pixels) bits)
-    */
-    val poff                    = pixel + offset
-    val pidx                    = UInt(log2Up(pixels) bits)
-    when(poff < pixels) {
-        pidx                    := poff.resized
-    } otherwise {
-        pidx                    := (poff - pixels).resized
-    }
-
-    val paddr                   = RegNext(pbytem + pidx * bytes_per_pixel)
+    val paddr                   = RegNext(pbytem + pixel * bytes_per_pixel)
     mem_raddr                   := paddr((addr_width - 1) downto 0)
 
     val curByte                 = Reg(UInt(8 bits))

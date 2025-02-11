@@ -24,7 +24,7 @@ object FedUp {
     }
 
     private def createStripROM(memory_size: Int) = {
-        val xs = Pride.prideSeq.flatten
+        val xs = Pride.prideSeq.map(U(_, 8 bits))
         val init = Seq.tabulate(memory_size)(i => if(i < xs.size) xs(i) else U(0, 8 bits))
         Mem(UInt(8 bits), init)
     }
@@ -158,12 +158,30 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         ledStrip.io.mem_rdata       := rom_rdata
         ledStrip.io.brightness      := brightness.value
 
-        val iaddr                   = ledStrip.io.mem_raddr
-        val max_addr                = Pride.prideSeq.size * stripCfg.bytes_per_pixel
+        val max_addr                = Pride.prideSeq.size
+        val offset                  = Reg(UInt(log2Up(max_addr) bits)) init(0)
+        val offsetClkDiv            = Counter(10_000_000) // 10_000_000 * 10ns = 0.1s
+        val decOffset               = Reg(Bool()) init(False)
+        when(decOffset && ledStrip.io.is_resetting) {
+            decOffset               := False
+            when(offset === 0) {
+                offset              := max_addr
+            } otherwise {
+                offset              := offset - 3
+            }
+        } elsewhen(!decOffset) {
+            offsetClkDiv.increment()
+            when(offsetClkDiv.willOverflow) {
+                decOffset           := True
+            }
+        }
+        
+        val paddr                   = ledStrip.io.mem_raddr.resize(stripCfg.addr_width + 1)
+        val iaddr                   = paddr //+ offset
         when(iaddr < max_addr) {
-            rom_raddr               := iaddr
+            rom_raddr               := iaddr.resized
         } otherwise {
-            rom_raddr               := iaddr - max_addr
+            rom_raddr               := (iaddr - max_addr).resized
         }
     }
 }
