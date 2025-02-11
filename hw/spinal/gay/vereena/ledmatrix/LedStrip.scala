@@ -88,14 +88,27 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
                                     2 -> U(2, 2 bits)
                                 )
     
+    /*
     val poff                    = pixel + offset
     val pidx                    = Mux(poff < pixels, poff, (poff - pixels)).resize(log2Up(pixels) bits)
+    */
+    val poff                    = pixel + offset
+    val pidx                    = UInt(log2Up(pixels) bits)
+    when(poff < pixels) {
+        pidx                    := poff.resized
+    } otherwise {
+        pidx                    := (poff - pixels).resized
+    }
 
-    val paddr                   = pbytem + pidx * bytes_per_pixel
+    val paddr                   = RegNext(pbytem + pidx * bytes_per_pixel)
     mem_raddr                   := paddr((addr_width - 1) downto 0)
 
     val curByte                 = Reg(UInt(8 bits))
     val bit                     = curByte(7 - pbit)
+
+    when(curBrightness === 0) {
+        bit                     := False
+    }
     
 
     val gammaRom                = WS2812B.createGammaROM()
@@ -112,12 +125,12 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
         val tileRowComplete     = new State
         val outputRst           = new State with EntryPoint
  
-        readNextByte.counting(      timer,  1,              outputBitShape                      ).onExit(curByte := gammaRom((mem_rdata * curBrightness).resized))
-        outputBitShape.counting(    timer,  TBIT,           bitComplete                         ).onEntry(dout := True)
-        bitComplete.counting(       pbit,   7,              byteComplete,       readNextByte    )
-        byteComplete.counting(      pbyte,  2,              pixelComplete,      readNextByte    )
-        pixelComplete.counting(     pixel,  pixels-1,       outputRst,          readNextByte    )
-        outputRst.counting(         timer,  TRST,           readNextByte                        ).onEntry(dout := False)
+        readNextByte.counting(      timer,  2,          outputBitShape                  ).onExit(curByte := gammaRom(mem_rdata))
+        outputBitShape.counting(    timer,  TBIT,       bitComplete                     ).onEntry(dout := True)
+        bitComplete.counting(       pbit,   7,          byteComplete,   readNextByte    )
+        byteComplete.counting(      pbyte,  2,          pixelComplete,  readNextByte    )
+        pixelComplete.counting(     pixel,  pixels-1,   outputRst,      readNextByte    )
+        outputRst.counting(         timer,  TRST,       readNextByte                    ).onEntry(dout := False)
 
         outputBitShape.whenIsActive {
             val t = Mux(bit, U(T1H), U(T0H))

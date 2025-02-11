@@ -4,13 +4,13 @@ import spinal.core._
 
 
 object Pride {
-    private val MAX_BRIGHTNESS      = 180
+    private val MAX_BRIGHTNESS      = 120
     private val FLAG_COLOR_WIDTH    = 16
 
     
     private def fixupColor(x: Int): Int = {
         val xd = x.toDouble / 255.0d
-        (xd * MAX_BRIGHTNESS).toInt >> 4
+        (xd * MAX_BRIGHTNESS).toInt
     }
 
     private def hexColor(c: Int) = Seq(

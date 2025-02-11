@@ -1,10 +1,13 @@
 package gay.vereena.ledmatrix
 
+import scala.math._
+
 import spinal.lib._
 import spinal.core._
 import spinal.core.sim._
 
 import gay.vereena.ledmatrix.misc._
+import scala.annotation.tailrec
 
 
 
@@ -20,9 +23,9 @@ object FedUp {
         Mem(UInt(8 bits), init)
     }
 
-    private def createStripROM(size: Int) = {
+    private def createStripROM(memory_size: Int) = {
         val xs = Pride.prideSeq.flatten
-        val init = Seq.tabulate(size)(x => xs(x % xs.size))
+        val init = Seq.tabulate(memory_size)(i => if(i < xs.size) xs(i) else U(0, 8 bits))
         Mem(UInt(8 bits), init)
     }
 }
@@ -151,9 +154,16 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
 
         val ledStrip                = LedStrip(stripCfg)
         gpio_strip_dout             := ledStrip.io.dout
-        rom_raddr                   := ledStrip.io.mem_raddr
         rom_read                    := ledStrip.io.mem_read
         ledStrip.io.mem_rdata       := rom_rdata
         ledStrip.io.brightness      := brightness.value
+
+        val iaddr                   = ledStrip.io.mem_raddr
+        val max_addr                = Pride.prideSeq.size * stripCfg.bytes_per_pixel
+        when(iaddr < max_addr) {
+            rom_raddr               := iaddr
+        } otherwise {
+            rom_raddr               := iaddr - max_addr
+        }
     }
 }
