@@ -162,17 +162,19 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         val offset                  = Reg(UInt(log2Up(max_addr) bits)) init(0)
         val offsetClkDiv            = Counter(10_000_000) // 10_000_000 * 10ns = 0.1s
         val decOffset               = Reg(Bool()) init(False)
-        when(decOffset && ledStrip.io.is_resetting) {
-            decOffset               := False
-            when(offset === 0) {
-                offset              := max_addr
-            } otherwise {
-                offset              := offset - 3
-            }
-        } elsewhen(!decOffset) {
-            offsetClkDiv.increment()
-            when(offsetClkDiv.willOverflow) {
-                decOffset           := True
+        when(brightness.stripEnabled) {
+            when(decOffset && ledStrip.io.is_resetting) {
+                decOffset           := False
+                when(offset === 0) {
+                    offset          := max_addr
+                } otherwise {
+                    offset          := offset - 3
+                }
+            } elsewhen(!decOffset) {
+                offsetClkDiv.increment()
+                when(offsetClkDiv.willOverflow) {
+                    decOffset       := True
+                }
             }
         }
         
@@ -182,9 +184,9 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
             rom_raddr               := iaddr.resized
         } otherwise {
             when(iaddr < max_addr * 2) {
-                rom_raddr               := (iaddr - max_addr).resized
+                rom_raddr           := (iaddr - max_addr).resized
             } otherwise {
-                rom_raddr               := (iaddr - max_addr * 2).resized
+                rom_raddr           := (iaddr - max_addr * 2).resized
             }
         }
     }
