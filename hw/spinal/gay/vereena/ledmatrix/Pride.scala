@@ -50,10 +50,19 @@ object Pride {
         0x303CBE
     )
 
+    val demigirlFlag = flag(
+        0x7F7F7F,
+        0xC4C4C4,
+        0xFDADC8,
+        0xC4C4C4,
+        0x7F7F7F,
+    )
+
 
     val prideSeq = Seq(
         //genderfluidFlag,
         transFlag,
         lesbianFlag,
+        //demigirlFlag,
     ).flatten
 }
