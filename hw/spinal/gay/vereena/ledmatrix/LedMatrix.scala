@@ -57,6 +57,8 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
         val mem_raddr           = out(atype())
         val mem_read            = out(Bool())
         val mem_rdata           = in(UInt(8 bits))
+
+        val blank               = in(Bool())
     }
     import io._
 
@@ -95,7 +97,7 @@ case class LedMatrix(cfg: LedMatrixConfig) extends Component {
     mem_raddr                   := paddr((addr_width - 1) downto 0)
     mem_read                    := False
 
-    val bit                     = curByte(7 - pbit)
+    val bit                     = Mux(blank, False, curByte(7 - pbit))
     
 
     val fsm                     = new StateMachine {

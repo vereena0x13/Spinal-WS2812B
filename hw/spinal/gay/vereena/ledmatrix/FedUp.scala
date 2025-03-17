@@ -61,25 +61,18 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         val keyDebouncer            = Debouncer(true)
         keyDebouncer.io.din         := gpio_enc_key
 
-        val stripEnabled            = Reg(Bool()) init(True)
-        when(keyDebouncer.io.dout.fall()) {
-            stripEnabled            := ~stripEnabled
-        }
-
-        val valueCnt                = Reg(UInt(4 bits)) init(7)
+        val value                   = Reg(UInt(4 bits)) init(3)
         when(encoder.io.count_cw) {
-            valueCnt                := valueCnt +| 1
+            value                   := value +| 1
         } elsewhen(encoder.io.count_ccw) {
-            valueCnt                := valueCnt -| 1
+            value                   := value -| 1
         }
-
-        val value                   = Mux(stripEnabled, valueCnt, U(0))
 
         val til311                  = TIL311()
         til311.io.value             := value
         gpio_til311_data            := til311.io.data
         gpio_til311_strobe          := til311.io.strobe
-        gpio_til311_blank           := Mux(stripEnabled, til311.io.blank, True)
+        gpio_til311_blank           := False
     }
 
 
@@ -129,6 +122,7 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         ram_raddr                   := ledMatrix.io.mem_raddr
         ram_read                    := ledMatrix.io.mem_read
         ledMatrix.io.mem_rdata      := ram_rdata
+        ledMatrix.io.blank          := ~brightness.value(1)
     }
 
 
@@ -156,13 +150,13 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
         gpio_strip_dout             := ledStrip.io.dout
         rom_read                    := ledStrip.io.mem_read
         ledStrip.io.mem_rdata       := rom_rdata
-        ledStrip.io.brightness      := brightness.value
+        ledStrip.io.blank           := ~brightness.value(0)
 
         val max_addr                = Pride.prideSeq.size
         val offset                  = Reg(UInt(log2Up(max_addr) bits)) init(0)
         val offsetClkDiv            = Counter(10_000_000) // 10_000_000 * 10ns = 0.1s
         val decOffset               = Reg(Bool()) init(False)
-        when(brightness.stripEnabled) {
+        when(brightness.value(0)) {
             when(decOffset && ledStrip.io.is_resetting) {
                 decOffset           := False
                 when(offset === 0) {

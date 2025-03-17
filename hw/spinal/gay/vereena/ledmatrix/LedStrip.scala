@@ -42,7 +42,7 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
         val mem_read            = out(Bool())
         val mem_rdata           = in(UInt(8 bits))
 
-        val brightness          = in(UInt(4 bits))
+        val blank               = in(Bool())
 
         val is_resetting        = out(Bool())
     }
@@ -60,8 +60,6 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
     val isResetting             = Bool()
     io.is_resetting             := isResetting
 
-    val curBrightness           = RegNextWhen(brightness, isResetting)
-
 
     // NOTE TODO: what should be the source of pixel data? what if
     //            someone bits to generate pixels on the fly w/o mem, etc.?
@@ -77,12 +75,8 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
     mem_raddr                   := paddr((addr_width - 1) downto 0)
 
     val curByte                 = Reg(UInt(8 bits))
-    val bit                     = curByte(7 - pbit)
+    val bit                     = Mux(blank, False, curByte(7 - pbit))
 
-    when(curBrightness === 0) {
-        bit                     := False
-    }
-    
 
     val gammaRom                = WS2812B.createGammaROM()
 
