@@ -4,7 +4,7 @@ ThisBuild / organization    := "gay.vereena"
 
 ThisBuild/scalacOptions ++= Seq("-unchecked", "-deprecation")
 
-val spinalVersion = "1.11.0"
+val spinalVersion = "1.12.2"
 val spinalCore = "com.github.spinalhdl" %% "spinalhdl-core" % spinalVersion
 val spinalLib = "com.github.spinalhdl" %% "spinalhdl-lib" % spinalVersion
 val spinalIdslPlugin = compilerPlugin("com.github.spinalhdl" %% "spinalhdl-idsl-plugin" % spinalVersion)
