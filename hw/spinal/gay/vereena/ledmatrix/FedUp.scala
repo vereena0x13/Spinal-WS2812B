@@ -51,7 +51,7 @@ case class FedUp(initialRamData: Option[Seq[Int]]) extends Component {
     import io._
 
 
-
+ 
 
     val brightness = new Area {
         val encoder                 = RotaryEncoder()

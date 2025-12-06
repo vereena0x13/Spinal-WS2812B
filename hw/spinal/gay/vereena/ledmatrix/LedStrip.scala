@@ -42,6 +42,13 @@ case class LedStrip(cfg: LedStripConfig) extends Component {
         val mem_read            = out(Bool())
         val mem_rdata           = in(UInt(8 bits))
 
+        //val force               = in(Bool())
+        //val force_color         = new Bundle() {
+        //    val r               = in(UInt(8 bits))
+        //    val g               = in(UInt(8 bits))
+        //    val b               = in(UInt(8 bits))
+        //}
+
         val blank               = in(Bool())
 
         val is_resetting        = out(Bool())

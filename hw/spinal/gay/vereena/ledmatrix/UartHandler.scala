@@ -36,9 +36,17 @@ case class UartHandler(cfg: LedMatrixConfig) extends Component {
     mem_wdata.setAsReg() init(0)
     mem_write.setAsReg() init(False)
     
+
     val buffer_size             = 5
     val buffer                  = Vec.fill(buffer_size)(Reg(UInt(8 bits)))
     val index                   = Reg(UInt(log2Up(buffer_size) bits)) init(0)
+
+    val byte_timer_max          = 100 * 1000 * 10 // 10ms
+    val timer                   = Reg(UInt(log2Up(byte_timer_max) bits)) init(0)
+
+    when(timer < byte_timer_max) {
+        timer                   := timer + 1
+    }
 
 
     val fsm                     = new StateMachine {
@@ -62,7 +70,14 @@ case class UartHandler(cfg: LedMatrixConfig) extends Component {
         recvByte.whenIsActive {
             buffer(index)       := uart.rdata.asUInt
             uart.rd             := False
-            goto(waitRxf)
+
+            timer               := 0
+            when(timer === byte_timer_max) {
+                index           := 0
+                goto(waitByte)
+            } otherwise {
+                goto(waitRxf)
+            }
         }
 
         waitRxf.counting(index, buffer_size-1, writeByte, waitByte, cond = Some(uart.rxf))
